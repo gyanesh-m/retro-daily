@@ -14,7 +14,7 @@
         retro analytics for claude code
 ```
 
-A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
+A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, contributions heatmap, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
 
 ## Sample output
 
@@ -59,6 +59,8 @@ S C O U T   F I N D I N G S
 
 ## Install
 
+> Pick **one** of the two methods. Running both registers the hook twice.
+
 ### Option A — Claude Code plugin (recommended)
 
 Inside Claude Code:
@@ -66,9 +68,16 @@ Inside Claude Code:
 ```
 /plugin marketplace add gyanesh-m/claude-daily
 /plugin install claude-daily@claude-daily
+/reload-plugins
 ```
 
-The repo ships its own marketplace (`.claude-plugin/marketplace.json`), plugin manifest (`.claude-plugin/plugin.json`), and `hooks/hooks.json`. After install, run `/reload-plugins` and the `SessionStart` hook registers automatically. Plugin state lives in `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/claude-daily-claude-daily/`).
+The repo doubles as its own single-plugin marketplace. State lives under `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/claude-daily-claude-daily/`) so plugin updates and uninstalls clean up after themselves.
+
+Test against a local clone before publishing:
+
+```sh
+claude --plugin-dir ./claude-daily
+```
 
 ### Option B — standalone script
 
@@ -77,43 +86,55 @@ git clone https://github.com/gyanesh-m/claude-daily.git
 cd claude-daily && ./install.sh
 ```
 
-Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` (creates the file if missing).
+Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` via `jq` (idempotent; falls back to printing the JSON to paste manually if `jq` is missing).
 
 Open a new Claude Code session — the dashboard renders.
 
-### Paths
+## Paths
 
-| Env var | Default | What |
+The scripts resolve their layout from two env vars. Defaults preserve the legacy single-directory layout for standalone installs; the plugin's `hooks.json` overrides both for plugin installs.
+
+| Env var | Standalone default | Plugin default |
 |---|---|---|
-| `CLAUDE_DAILY_HOME` | script's own directory | code (read-only) |
-| `CLAUDE_DAILY_DATA` | `~/.claude/metrics` | state: store, results, logs, archive, cached venv |
+| `CLAUDE_DAILY_HOME` | script's own directory | `${CLAUDE_PLUGIN_ROOT}` |
+| `CLAUDE_DAILY_DATA` | `~/.claude/metrics` | `${CLAUDE_PLUGIN_DATA}` |
 
 ## Requirements
 
-- `python3` with `numpy` and `sentence-transformers` (for the embedding-based prompt classifier)
-- `jq` (for the installer's settings.json merge)
-- `claude` CLI (for the scout background worker)
+- `python3`
+- Python packages: `numpy`, `sentence-transformers` (for the embedding-based prompt classifier)
+- `jq` (only for the standalone installer's settings.json merge)
+- `claude` CLI on `$PATH` (for the scout background worker)
 
 ## Files
 
 | File | Role |
 |---|---|
-| `startup.sh` | hook entrypoint |
-| `daily-insights.sh` | dashboard driver |
-| `generate-metrics.py` | renderer + metric computation |
-| `metric_advisor.py` | thresholds, deltas, severity |
-| `prompt_classifier.py` | embedding-based prompt outcome classification |
-| `session_enricher.py` | per-session enrichment + topic extraction |
-| `scout.sh` / `scout-runner.sh` | background scout worker |
-| `scout-review.sh` | renders the SCOUT FINDINGS block |
-| `scout-browse.sh` | interactive viewer for archived findings |
+| `startup.sh` | hook entrypoint, runs the three steps below |
+| `daily-insights.sh` + `generate-metrics.py` + `metric_advisor.py` | dashboard renderer |
+| `prompt_classifier.py` + `session_enricher.py` | MiniLM-based prompt outcome + topic classification |
+| `scout.sh` + `scout-runner.sh` + `scout-review.sh` + `scout-browse.sh` | background scout worker + viewer |
+| `_paths.sh` | shared `CLAUDE_DAILY_HOME` / `CLAUDE_DAILY_DATA` resolution |
+| `install.sh` | standalone installer |
+| `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |
 
 ## Uninstall
 
+**Plugin install:**
+
+```
+/plugin uninstall claude-daily@claude-daily
+```
+
+This also clears `~/.claude/plugins/data/claude-daily-claude-daily/`. Pass `--keep-data` to preserve the metrics store across reinstalls.
+
+**Standalone install:**
+
 ```sh
 rm -rf ~/.claude/metrics
-# then remove the SessionStart hook entry from ~/.claude/settings.json
 ```
+
+Then remove the `SessionStart` hook entry from `~/.claude/settings.json`.
 
 ```
                   [ press any key to continue ]
