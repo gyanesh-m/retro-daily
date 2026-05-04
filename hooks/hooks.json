@@ -1,0 +1,15 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/startup.sh",
+          "timeout": 40,
+          "statusMessage": "Loading session analytics..."
+        }
+      ]
+    }
+  ]
+}

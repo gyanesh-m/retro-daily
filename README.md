@@ -1,191 +1,117 @@
-# Claude Code Daily Analytics
-
-Automated metrics collection and insight generation for all Claude Code sessions. Runs once per day via a `SessionStart` hook, processes yesterday's sessions, and surfaces key insights at the start of your first session each day.
-
-## How It Works
-
 ```
-You open Claude Code
-  → SessionStart hook fires
-  → daily-insights.sh checks last-run-date.txt
-  → Already ran today? Exit in 22ms. Done.
-  → New day? Run generate-metrics.py:
-      1. Scan all project dirs under ~/.claude/projects/
-      2. Find JSONL session logs from unprocessed dates (up to yesterday)
-      3. Extract tool usage, permission waits, user messages
-      4. Run embedding classifier on user message pairs
-      5. Append daily metrics to metrics-store.json
-      6. Print insights to transcript
-      7. Write today's date to last-run-date.txt
-  → Next session today: skip (22ms)
+   ▄████▄   ██▓    ▄▄▄       █    ██ ▓█████▄ ▓█████
+  ▒██▀ ▀█  ▓██▒   ▒████▄     ██  ▓██▒▒██▀ ██▌▓█   ▀
+  ▒▓█    ▄ ▒██░   ▒██  ▀█▄  ▓██  ▒██░░██   █▌▒███
+  ▒▓▓▄ ▄██▒▒██░   ░██▄▄▄▄██ ▓▓█  ░██░░▓█▄   ▌▒▓█  ▄
+  ▒ ▓███▀ ░░██████▒▓█   ▓██▒▒▒█████▓ ░▒████▓ ░▒████▒
+  ░ ░▒ ▒  ░░ ▒░▓  ░▒▒   ▓▒█░░▒▓▒ ▒ ▒  ▒▒▓  ▒ ░░ ▒░ ░
+    ░  ▒   ░ ░ ▒  ░ ▒   ▒▒ ░░░▒░ ░ ░  ░ ▒  ▒  ░ ░  ░
+  ░          ░ ░    ░   ▒    ░░░ ░ ░  ░ ░  ░    ░
+  ░ ░          ░  ░     ░  ░   ░        ░       ░  ░
+
+           D · A · I · L · Y    [v0.1]
+       ════════════════════════════════════
+        retro analytics for claude code
 ```
 
-## What It Measures
+A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
 
-### Tool Efficiency
-| Metric | What | Good |
-|--------|------|------|
-| Edit/Read ratio | Edits+Writes ÷ Reads+Greps+Globs | >1.0 (modifying, not just browsing) |
-| Tools per user message | Total tool calls ÷ user messages | <1.5 (batching, parallelism) |
-| Agent delegation rate | Agent calls as % of all tools | 3–15% (delegation without over-spawning) |
-| Bash usage | Bash calls as % of all tools | <25% (prefer dedicated tools) |
+## Sample output
 
-### Permission Interrupts
-| Metric | What | Good |
-|--------|------|------|
-| Auto-approve rate | Tool calls approved without prompting | >75% (trust is calibrated) |
-| Median wait | Time user takes to approve/deny | <15s (fast feedback loop) |
-| p90 wait | 90th percentile approval wait | <120s (outliers under control) |
-| Denial rate | Tool calls explicitly denied | <2% (Claude is well-behaved) |
+```
+C L A U D E  ·  D A I L Y                                 Mon May 04
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### Prompt Effectiveness (Embedding-Based)
+A L L - T I M E
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   1197 sessions  10626 tools   21 days   15 projects   $6436.49 est.
+  tokens  239.0K in  10.6M out  1.82B cache-read  127.2M cache-write
 
-Uses `all-MiniLM-L6-v2` (sentence-transformers) to classify consecutive user message pairs. For each `(prompt[i], prompt[i+1])` pair, the classifier determines what the user's reaction means:
+C O M P E T E N C Y
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ███████████████████░░░░░░░░░░░   62.1/100    D
+  breakdown   Edit/Read 100  Auto-approve 29  First-try 100  ...
 
-| Classification | Meaning | Counts as success? |
-|---------------|---------|-------------------|
-| **APPROVAL** | User accepted — "lgtm", "perfect", "ship it" | Yes |
-| **NEW_TASK** | User moved to unrelated topic (prompt worked, done) | Yes |
-| **REFINEMENT** | Minor tweak — "also add", "make it more" | No (but not failure) |
-| **CORRECTION** | Wrong direction — "no", "undo", "that's not what I meant" | No |
+E F F I C I E N C Y
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  metric            value   14-day trend     7d   30d   status
+  Edit / Read         1.0   ▄▂▁▃▂▃▂▅▄█▄█▄▁   ↓    ↓     ⬤ good
+  Auto-approve      65.7%   ▇▆▁▇▃▆▆▄▆█▇██▂   ↓    ↓     ⬤ bad
+  First-try         83.4%   ▇██▇▇███▇▇█▇█▁   ↓    ↓     ⬤ good
+  Corrections       15.1%   ▇▄▃▄█▂▁▂▁▁▃▁▁▁   ↓    ↓     ⬤ bad
+  Tool errors       10.2%   ▂▄▅▁▃▂▂▂▃█▃█▃▁   ↓    ↓     ⬤ bad
+  Ctx hygiene       50.0%   ·········▁▁▁██   ↓    ↓     ⬤ warn
 
-| Metric | What | Good |
-|--------|------|------|
-| First-try rate | (APPROVAL + NEW_TASK) ÷ total pairs × 100 | >65% |
-| Correction count | Actual course corrections per day | Trending down |
+C O N T R I B U T I O N S
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      May Jun  Jul Aug  Sep Oct Nov  Dec Jan Feb Mar  Apr
+     ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  Mon ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  ...
+  less ■■■■■ more   1197 sessions across 21 days this year
 
-**How the classifier works:**
-1. Pre-computes category centroids from ~20 reference phrases each
-2. Embeds all user messages in a session as a batch (fast)
-3. Each reaction is compared against category centroids via cosine similarity
-4. Topic similarity between consecutive messages helps distinguish NEW_TASK (low sim) from CORRECTION (high sim, negative sentiment)
+S C O U T   F I N D I N G S
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ● claude code auto approve setup
+      → If on Team plan, run `claude --permission-mode auto` ...
+      ★ oryband/claude-code-auto-approve · Install as a PreToolUse hook ...
+```
 
-**Why MiniLM, not regex:**
-- Regex catches "no, don't" but misses "hmm, I was thinking more like..."
-- Regex false-positives on brainstorming ("no, something else" = exploring, not correcting)
-- Embeddings understand semantic intent, not just keyword presence
-- MiniLM is 80MB, runs in <50ms per embed on CPU, no API costs
+## Install
+
+### Option A — Claude Code plugin (recommended)
+
+```sh
+/plugin install gyanesh-m/claude-daily
+```
+
+Ships with `.claude-plugin/plugin.json` + `hooks/hooks.json`, so the `SessionStart` hook registers automatically. State lives in `~/.claude/metrics/`.
+
+### Option B — standalone script
+
+```sh
+git clone https://github.com/gyanesh-m/claude-daily.git
+cd claude-daily && ./install.sh
+```
+
+Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` (creates the file if missing).
+
+Open a new Claude Code session — the dashboard renders.
+
+### Paths
+
+| Env var | Default | What |
+|---|---|---|
+| `CLAUDE_DAILY_HOME` | script's own directory | code (read-only) |
+| `CLAUDE_DAILY_DATA` | `~/.claude/metrics` | state: store, results, logs, archive, cached venv |
+
+## Requirements
+
+- `python3` with `numpy` and `sentence-transformers` (for the embedding-based prompt classifier)
+- `jq` (for the installer's settings.json merge)
+- `claude` CLI (for the scout background worker)
 
 ## Files
 
-```
-~/.claude/metrics/
-├── README.md                 # This file
-├── generate-metrics.py       # Main generator — processes JSONLs, runs classifier
-├── prompt_classifier.py      # Embedding-based prompt effectiveness classifier
-├── daily-insights.sh         # Hook wrapper — date-gate, runs generator if needed
-├── .venv/                    # Isolated Python env (sentence-transformers, torch)
-├── metrics-store.json        # Persistent daily metrics store (auto-generated)
-└── last-run-date.txt         # Date of last successful run (auto-generated)
-```
+| File | Role |
+|---|---|
+| `startup.sh` | hook entrypoint |
+| `daily-insights.sh` | dashboard driver |
+| `generate-metrics.py` | renderer + metric computation |
+| `metric_advisor.py` | thresholds, deltas, severity |
+| `prompt_classifier.py` | embedding-based prompt outcome classification |
+| `session_enricher.py` | per-session enrichment + topic extraction |
+| `scout.sh` / `scout-runner.sh` | background scout worker |
+| `scout-review.sh` | renders the SCOUT FINDINGS block |
+| `scout-browse.sh` | interactive viewer for archived findings |
 
-## Hook Configuration
+## Uninstall
 
-The hook is registered globally in `~/.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/metrics/daily-insights.sh",
-            "timeout": 30,
-            "statusMessage": "Checking daily analytics..."
-          }
-        ]
-      }
-    ]
-  }
-}
+```sh
+rm -rf ~/.claude/metrics
+# then remove the SessionStart hook entry from ~/.claude/settings.json
 ```
 
-This fires on every session start, for every project. The bash script handles the once-per-day gate internally.
-
-## Sample Output
-
-On the first session of a new day:
-
 ```
-Daily Analytics Summary
-All-time: 62 sessions | 1681 tools | 7 active days | 9 projects
-Efficiency: Edit/Read 1.2 | Auto-approve 78.7% | First-try rate 66.2%
-Prompt breakdown: 155 approvals, 305 new tasks, 59 refinements, 176 corrections
-
-Yesterday (2026-04-05): 1 session, 666 tools, first-try 72.3% [rephrase-kit-repo]
-  Prompts: 50 approved, 30 new tasks, 8 refinements, 12 corrections
+                  [ press any key to continue ]
 ```
-
-Warnings surface automatically:
-```
-  Warning: More corrections than approvals. Check prompt clarity.
-  Warning: Low first-try rate. Many prompts needed follow-up corrections.
-  Warning: Slow permission waits. Consider expanding auto-approve rules.
-```
-
-## Performance
-
-| Scenario | Time |
-|----------|------|
-| Fast path (already ran today) | 22ms |
-| Full run (model cached, few sessions) | <1s |
-| Full run (model cold load, many sessions) | ~15s |
-| Full run (first ever, downloads model) | ~60s |
-
-The MiniLM model (~80MB) downloads once on first run and is cached at `~/.cache/torch/sentence_transformers/`.
-
-## Data Flow
-
-```
-~/.claude/projects/*/     JSONL session logs (source of truth)
-        │
-        ▼
-generate-metrics.py       Processes unprocessed dates
-        │
-        ├──► prompt_classifier.py    Embeds user messages, classifies pairs
-        │
-        ▼
-metrics-store.json        Persistent store (daily + cumulative + per-project)
-        │
-        ▼
-stdout (hook output)      Key insights shown in Claude Code transcript
-```
-
-## Manually Running
-
-```bash
-# Force a fresh run (reprocesses all dates)
-rm ~/.claude/metrics/last-run-date.txt ~/.claude/metrics/metrics-store.json
-~/.claude/metrics/.venv/bin/python3 ~/.claude/metrics/generate-metrics.py
-
-# Check stored metrics
-cat ~/.claude/metrics/metrics-store.json | python3 -m json.tool
-
-# Run classifier on a single session interactively
-~/.claude/metrics/.venv/bin/python3 -c "
-from prompt_classifier import PromptClassifier
-c = PromptClassifier()
-result = c.classify_pair('add a login page', 'no, I meant a signup page')
-print(result)  # {'category': 'CORRECTION', 'confidence': 0.612, 'topic_sim': 0.847}
-"
-```
-
-## Extending
-
-**Add new reference phrases** to `prompt_classifier.py` `REFERENCE_PHRASES` dict to improve classification accuracy for your patterns.
-
-**Add new metrics** to `process_session()` in `generate-metrics.py` — any data extractable from the JSONL messages is fair game.
-
-**Dashboard** — run `open /tmp/claude-analytics.html` for the full interactive Chart.js dashboard (generated separately, not part of the daily hook).
-
-## Dependencies
-
-- Python 3.9+
-- sentence-transformers (installed in .venv)
-- torch (pulled by sentence-transformers)
-- numpy (pulled by sentence-transformers)
-
-All dependencies are isolated in `.venv/` — no global pip installs.
