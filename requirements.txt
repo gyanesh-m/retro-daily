@@ -1,2 +1,10 @@
 numpy>=2.0
+# MiniLM via sentence-transformers — used for topic similarity and the
+# extractive_summary path in session_enricher. ~90MB.
 sentence-transformers>=5.0
+# Optional: transformers + sentencepiece add a zero-shot NLI fallback for
+# reactions that don't match any lexical cue. Cues alone cover ~98% of the
+# synthetic eval; NLI is insurance for unusual phrasings. Adding ~500MB of
+# dependencies. Comment out if you want a leaner install.
+transformers>=4.40
+sentencepiece>=0.2

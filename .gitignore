@@ -1,0 +1,8 @@
+# Private user-local eval data — built from ~/.claude/projects/, never commit
+tests/eval.local*.json
+tests/eval.local-unlabeled.json
+
+# Caches and venvs
+__pycache__/
+*.pyc
+.venv/

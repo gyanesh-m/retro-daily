@@ -1,0 +1,56 @@
+{
+  "accuracy": 0.98,
+  "n": 50,
+  "confusion_matrix": {
+    "APPROVAL": {
+      "APPROVAL": 13,
+      "REFINEMENT": 0,
+      "CORRECTION": 0,
+      "NEW_TASK": 0
+    },
+    "REFINEMENT": {
+      "APPROVAL": 0,
+      "REFINEMENT": 12,
+      "CORRECTION": 0,
+      "NEW_TASK": 0
+    },
+    "CORRECTION": {
+      "APPROVAL": 0,
+      "REFINEMENT": 1,
+      "CORRECTION": 12,
+      "NEW_TASK": 0
+    },
+    "NEW_TASK": {
+      "APPROVAL": 0,
+      "REFINEMENT": 0,
+      "CORRECTION": 0,
+      "NEW_TASK": 12
+    }
+  },
+  "per_class": {
+    "APPROVAL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 13
+    },
+    "REFINEMENT": {
+      "precision": 0.9230769230769231,
+      "recall": 1.0,
+      "f1": 0.9600000000000001,
+      "support": 12
+    },
+    "CORRECTION": {
+      "precision": 1.0,
+      "recall": 0.9230769230769231,
+      "f1": 0.9600000000000001,
+      "support": 13
+    },
+    "NEW_TASK": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 12
+    }
+  }
+}
