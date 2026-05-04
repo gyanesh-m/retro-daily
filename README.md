@@ -61,11 +61,14 @@ S C O U T   F I N D I N G S
 
 ### Option A — Claude Code plugin (recommended)
 
-```sh
-/plugin install gyanesh-m/claude-daily
+Inside Claude Code:
+
+```
+/plugin marketplace add gyanesh-m/claude-daily
+/plugin install claude-daily@claude-daily
 ```
 
-Ships with `.claude-plugin/plugin.json` + `hooks/hooks.json`, so the `SessionStart` hook registers automatically. State lives in `~/.claude/metrics/`.
+The repo ships its own marketplace (`.claude-plugin/marketplace.json`), plugin manifest (`.claude-plugin/plugin.json`), and `hooks/hooks.json`. After install, run `/reload-plugins` and the `SessionStart` hook registers automatically. Plugin state lives in `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/claude-daily-claude-daily/`).
 
 ### Option B — standalone script
 
