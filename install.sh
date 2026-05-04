@@ -17,7 +17,8 @@ bold "claude-daily installer"
 # 1. Source check — installer must run from a clone, or via curl-pipe with a known set of files.
 FILES=(_paths.sh startup.sh daily-insights.sh generate-metrics.py metric_advisor.py
        prompt_classifier.py session_enricher.py
-       scout.sh scout-runner.sh scout-review.sh scout-browse.sh)
+       scout.sh scout-runner.sh scout-review.sh scout-browse.sh
+       setup-venv.sh requirements.txt)
 
 if [[ ! -f "${SCRIPT_DIR}/startup.sh" ]]; then
   warn "Run from a cloned repo: git clone https://github.com/gyanesh-m/claude-daily.git && cd claude-daily && ./install.sh"
@@ -32,7 +33,15 @@ for f in "${FILES[@]}"; do
 done
 ok "Copied ${#FILES[@]} files to ${DEST}"
 
-# 3. Register the SessionStart hook in settings.json.
+# 3. Bootstrap the Python venv (idempotent — skips if deps already resolve).
+if command -v python3 >/dev/null 2>&1; then
+  CLAUDE_DAILY_HOME="${DEST}" CLAUDE_DAILY_DATA="${DEST}" \
+    bash "${DEST}/setup-venv.sh" || warn "venv setup failed — embedding classification will be disabled until you run setup-venv.sh manually"
+else
+  warn "python3 not found on PATH — install python3 then run: bash ${DEST}/setup-venv.sh"
+fi
+
+# 4. Register the SessionStart hook in settings.json.
 mkdir -p "$(dirname "${SETTINGS}")"
 [[ -f "${SETTINGS}" ]] || echo '{}' > "${SETTINGS}"
 

@@ -101,10 +101,31 @@ The scripts resolve their layout from two env vars. Defaults preserve the legacy
 
 ## Requirements
 
-- `python3`
-- Python packages: `numpy`, `sentence-transformers` (for the embedding-based prompt classifier)
-- `jq` (only for the standalone installer's settings.json merge)
-- `claude` CLI on `$PATH` (for the scout background worker)
+- `python3` (3.9+) — required
+- `claude` CLI on `$PATH` — required for the scout background worker
+- `jq` — only for the standalone installer's `settings.json` merge
+
+### Python dependencies
+
+The embedding-based prompt classifier needs `numpy` and `sentence-transformers` (which pulls in `torch` and `transformers`). These are installed into a venv at `${CLAUDE_DAILY_DATA}/.venv` so they don't pollute system Python.
+
+**Standalone install** runs `setup-venv.sh` automatically — first run downloads ~500MB of model deps.
+
+**Plugin install** does not auto-bootstrap (plugin install paths are read-only at install time). After `/plugin install`, run once:
+
+```sh
+bash ~/.claude/plugins/cache/<marketplace>/<plugin>/setup-venv.sh
+```
+
+Or, simpler — clone and run:
+
+```sh
+git clone https://github.com/gyanesh-m/claude-daily.git
+CLAUDE_DAILY_DATA=~/.claude/plugins/data/claude-daily-claude-daily \
+  bash ./claude-daily/setup-venv.sh
+```
+
+The dashboard renders even without the venv — only the embedding-driven prompt outcome classification (APPROVAL / REFINEMENT / CORRECTION) is skipped.
 
 ## Files
 
@@ -115,7 +136,7 @@ The scripts resolve their layout from two env vars. Defaults preserve the legacy
 | `prompt_classifier.py` + `session_enricher.py` | MiniLM-based prompt outcome + topic classification |
 | `scout.sh` + `scout-runner.sh` + `scout-review.sh` + `scout-browse.sh` | background scout worker + viewer |
 | `_paths.sh` | shared `CLAUDE_DAILY_HOME` / `CLAUDE_DAILY_DATA` resolution |
-| `install.sh` | standalone installer |
+| `install.sh` + `setup-venv.sh` + `requirements.txt` | standalone installer + Python venv bootstrap |
 | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |
 
 ## Uninstall
