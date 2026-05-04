@@ -18,6 +18,7 @@ bold "claude-daily installer"
 FILES=(_paths.sh startup.sh daily-insights.sh generate-metrics.py metric_advisor.py
        prompt_classifier.py session_enricher.py
        scout.sh scout-runner.sh scout-review.sh scout-browse.sh
+       tag-sessions.sh tag-sessions-runner.sh
        setup-venv.sh requirements.txt)
 
 if [[ ! -f "${SCRIPT_DIR}/startup.sh" ]]; then

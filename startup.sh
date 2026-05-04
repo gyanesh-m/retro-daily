@@ -41,6 +41,7 @@ run_step() {
 # reverse order buried scout above the viewport.
 run_step "daily-insights" bash "$CLAUDE_DAILY_HOME/daily-insights.sh" || true
 run_step "scout"          bash "$CLAUDE_DAILY_HOME/scout.sh"          || true
+run_step "tag-sessions"   bash "$CLAUDE_DAILY_HOME/tag-sessions.sh"   || true
 run_step "scout-review"   bash "$CLAUDE_DAILY_HOME/scout-review.sh"   || true
 
 echo "===== startup.sh finished at $(date -u +%Y-%m-%dT%H:%M:%SZ) =====" >> "$DEBUG_LOG"

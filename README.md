@@ -110,9 +110,11 @@ Set `CLAUDE_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"
 
 ### Python dependencies
 
-The embedding-based prompt classifier needs `numpy` and `sentence-transformers` (which pulls in `torch` and `transformers`). These are installed into a venv at `${CLAUDE_DAILY_DATA}/.venv` so they don't pollute system Python.
+The prompt classifier uses `sentence-transformers` (~90MB MiniLM, required for topic similarity) and optionally `transformers` + `sentencepiece` (~500MB DeBERTa NLI, fallback for reactions that don't match any lexical cue). On the synthetic eval, lexical cues alone classify 49/50 cases correctly — NLI is insurance, not the primary path.
 
-**Standalone install** runs `setup-venv.sh` automatically — first run downloads ~500MB of model deps.
+These are installed into a venv at `${CLAUDE_DAILY_DATA}/.venv` so they don't pollute system Python.
+
+**Standalone install** runs `setup-venv.sh` automatically — first run downloads ~600MB of model deps.
 
 **Plugin install** does not auto-bootstrap (plugin install paths are read-only at install time). After `/plugin install`, run once:
 
@@ -130,14 +132,29 @@ CLAUDE_DAILY_DATA=~/.claude/plugins/data/claude-daily-claude-daily \
 
 The dashboard renders even without the venv — only the embedding-driven prompt outcome classification (APPROVAL / REFINEMENT / CORRECTION) is skipped.
 
+## How classification works
+
+| Signal | Source | Cadence |
+|---|---|---|
+| Prompt outcome (APPROVAL / REFINEMENT / CORRECTION / NEW_TASK) | `prompt_classifier.py` — lexical cues + zero-shot NLI fallback | Every regen (once per day) |
+| Topic + interaction type per session | `tag-sessions-runner.sh` — `claude -p` labels each session with a free-form noun phrase | Once per week |
+| Extractive summary of representative messages | `session_enricher.py` — longest-unique heuristic | Every regen |
+
+The prompt classifier hits 98% on `tests/eval.json` (a 50-pair synthetic dataset). Run `python3 tests/eval_classifier.py` to verify against your own labels.
+
+Session tags are surfaced as the `topics` and `interaction_types` fields per day in `metrics-store.json`. Untagged sessions (newly created since the last weekly run) show as `untagged` until the next tagging cycle.
+
 ## Files
 
 | File | Role |
 |---|---|
-| `startup.sh` | hook entrypoint, runs the three steps below |
+| `startup.sh` | hook entrypoint, runs the steps below |
 | `daily-insights.sh` + `generate-metrics.py` + `metric_advisor.py` | dashboard renderer |
-| `prompt_classifier.py` + `session_enricher.py` | MiniLM-based prompt outcome + topic classification |
-| `scout.sh` + `scout-runner.sh` + `scout-review.sh` + `scout-browse.sh` | background scout worker + viewer |
+| `prompt_classifier.py` | hybrid cue + zero-shot NLI prompt classifier |
+| `session_enricher.py` | session tag loader + extractive summary |
+| `scout.sh` + `scout-runner.sh` + `scout-review.sh` + `scout-browse.sh` | background scout worker for weak-metric guidance |
+| `tag-sessions.sh` + `tag-sessions-runner.sh` | weekly LLM session tagger |
+| `tests/eval.json` + `tests/eval_classifier.py` + `tests/sample_pairs.py` | classifier regression test |
 | `_paths.sh` | shared `CLAUDE_DAILY_HOME` / `CLAUDE_DAILY_DATA` resolution |
 | `install.sh` + `setup-venv.sh` + `requirements.txt` | standalone installer + Python venv bootstrap |
 | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |

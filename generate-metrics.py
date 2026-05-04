@@ -22,9 +22,8 @@ STORE_FILE = DATA_DIR / "metrics-store.json"
 LAST_RUN_FILE = DATA_DIR / "last-run-date.txt"
 VENV_PYTHON = DATA_DIR / ".venv" / "bin" / "python3"
 
-# Lazy-loaded classifier and enricher (only initialized if needed)
+# Lazy-loaded classifier (only initialized if needed)
 _classifier = None
-_enricher = None
 
 def get_classifier():
     global _classifier
@@ -33,14 +32,6 @@ def get_classifier():
         from prompt_classifier import PromptClassifier
         _classifier = PromptClassifier()
     return _classifier
-
-def get_enricher(classifier):
-    global _enricher
-    if _enricher is None:
-        sys.path.insert(0, str(CODE_DIR))
-        from session_enricher import SessionEnricher
-        _enricher = SessionEnricher(classifier.model)
-    return _enricher
 
 
 # Per-model pricing ($/1M tokens). base_in/base_out are <=200K prompts;
@@ -520,6 +511,7 @@ def main():
             "long_sessions": 0, "long_compacted": 0,
         }
         all_user_texts_day = []  # Collect for classifier
+        all_sessions_day = []   # (session_id, user_texts) for tag lookup + summary
 
         for proj_name, files in new_data[d].items():
             day_agg["sessions"] += len(files)
@@ -554,9 +546,10 @@ def main():
                     day_agg["long_sessions"] += 1
                     if s.get("compacted", False):
                         day_agg["long_compacted"] += 1
-                # Collect user texts per session for classifier
+                # Collect user texts + session id per session for classifier and tag lookup
                 if s["user_texts"] and len(s["user_texts"]) >= 2:
                     all_user_texts_day.append(s["user_texts"])
+                    all_sessions_day.append((Path(f).stem, s["user_texts"]))
 
             # Track per-project cumulative
             if proj_name not in store["by_project"]:
@@ -577,19 +570,29 @@ def main():
             successful = day_agg["prompt_classifications"]["APPROVAL"] + day_agg["prompt_classifications"]["NEW_TASK"]
             day_agg["first_try_rate"] = round(successful * 100 / max(total_pairs, 1), 1)
 
-        # Session enrichment (topic classification, interaction types, extractive summaries)
-        if classifier and all_user_texts_day:
+        # Session enrichment via LLM-derived tags + a non-ML extractive summary.
+        # Tags are produced out-of-band by tag-sessions-runner.sh on a weekly
+        # cadence; we just join them in here. Sessions without tags (newly
+        # created since the last tagging run) count as "untagged".
+        if all_sessions_day:
             try:
-                enricher = get_enricher(classifier)
+                sys.path.insert(0, str(CODE_DIR))
+                from session_enricher import load_session_tags, extractive_summary
+                tags = load_session_tags()
                 day_topics = Counter()
                 day_interaction_types = Counter()
                 day_summaries = []
-                for user_texts in all_user_texts_day:
-                    result = enricher.enrich_session(user_texts)
-                    for topic, score in result["topics"]:
-                        day_topics[topic] += 1
-                    day_interaction_types[result["interaction_type"]] += 1
-                    day_summaries.extend(result["summary"])
+                for sid, user_texts in all_sessions_day:
+                    tag = tags.get(sid)
+                    if tag:
+                        topic = tag.get("topic", "untagged")
+                        itype = tag.get("interaction_type", "exploration")
+                    else:
+                        topic = "untagged"
+                        itype = "exploration"
+                    day_topics[topic] += 1
+                    day_interaction_types[itype] += 1
+                    day_summaries.extend(extractive_summary(user_texts))
                 day_agg["topics"] = dict(day_topics.most_common(5))
                 day_agg["interaction_types"] = dict(day_interaction_types)
                 day_agg["session_summaries"] = day_summaries[:6]
@@ -621,17 +624,9 @@ def main():
 
     _refresh_cumulative(store)
 
-    # Flush new topic entries and get candidate labels
-    topic_candidates = []
-    if _enricher is not None:
-        try:
-            topic_candidates = _enricher.flush_new_topics() or []
-        except Exception as e:
-            print(f"Note: Topic flush failed ({e})", file=sys.stderr)
-
     save_store(store)
     LAST_RUN_FILE.write_text(today.isoformat())
-    print_insights(store, yesterday.isoformat(), topic_candidates)
+    print_insights(store, yesterday.isoformat())
 
 
 def _c(code):
@@ -985,7 +980,7 @@ def _contribution_matrix(store):
     return lines
 
 
-def print_insights(store, yesterday_str, topic_candidates=None):
+def print_insights(store, yesterday_str):
     """Editorial-style metrics dashboard with sparklines and severity gauges."""
     from metric_advisor import compute_deltas, evaluate_metrics, METRIC_THRESHOLDS, \
         load_analysis_history, save_analysis_history
@@ -1282,23 +1277,22 @@ def print_insights(store, yesterday_str, topic_candidates=None):
             with open(scout_path, "w") as f:
                 json.dump(scout_data, f, indent=2)
 
-    # New topics
-    if topic_candidates:
-        out.append("")
-        out.append(_section("NEW TOPICS"))
-        for c in topic_candidates:
-            out.append(f"  {BRIGHT_YELLOW}●{RESET} {c['cluster_size']} sessions — {DIM}{c['keyword_hint']}{RESET}")
-            out.append(f"    {DIM}samples: {c['sample_messages'][:2]}{RESET}")
-        out.append(f"  {DIM}→ review via /context-efficiency or custom-topics.json{RESET}")
-    else:
-        from session_enricher import load_new_topics
-        pending = load_new_topics()
-        if pending:
-            msg = (f"  {BRIGHT_YELLOW}●{RESET} {len(pending)} uncategorized session(s) — "
-                   f"{DIM}need {3 - len(pending)} more to cluster{RESET}" if len(pending) < 3
-                   else f"  {BRIGHT_YELLOW}●{RESET} {len(pending)} uncategorized session(s) pending review")
-            out.append("")
-            out.append(msg)
+    # Tag freshness signal: if last tagging run is stale, surface a hint.
+    try:
+        history_path = DATA_DIR / "analysis-history.json"
+        if history_path.exists():
+            from datetime import date as _date
+            history = json.load(open(history_path))
+            last_tag = history.get("last_session_tagging")
+            if last_tag:
+                from datetime import date as _d, timedelta as _td
+                days = (_d.today() - _d.fromisoformat(last_tag)).days
+                if days >= 14:
+                    out.append("")
+                    out.append(f"  {BRIGHT_YELLOW}●{RESET} session tags last refreshed {days} days ago — "
+                               f"{DIM}new sessions show as 'untagged' until next weekly run{RESET}")
+    except Exception:
+        pass
 
     out.append("")
     out.append(f"{DIM}{'─' * _RULE_WIDTH}{RESET}")
