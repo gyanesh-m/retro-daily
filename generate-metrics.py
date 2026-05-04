@@ -53,8 +53,10 @@ PRICING = {
     "haiku35": {"in": 0.8,  "out": 4.0,   "in_1m": 0.8,  "out_1m": 4.0},
 }
 
-# Flat subscription plan — estimated_cost is API-equivalent value, not out-of-pocket.
-PLAN_LABEL = "Claude Max $100/mo"
+# Cost numbers are computed at API list price; they are NOT what you actually pay
+# if you're on a Claude subscription. CLAUDE_DAILY_PLAN_LABEL lets users name their
+# plan so the footer reads, e.g., "capped by Claude Max $100/mo". Unset = generic.
+PLAN_LABEL = os.environ.get("CLAUDE_DAILY_PLAN_LABEL", "").strip()
 
 def model_family(model_id: str) -> str:
     m = (model_id or "").lower()
@@ -1023,7 +1025,10 @@ def print_insights(store, yesterday_str, topic_candidates=None):
         f"{cost_part}"
     )
     if cost:
-        out.append(f"  {DIM}API-equivalent value · actual out-of-pocket capped by {PLAN_LABEL}{RESET}")
+        if PLAN_LABEL:
+            out.append(f"  {DIM}API-equivalent value · actual out-of-pocket capped by {PLAN_LABEL}{RESET}")
+        else:
+            out.append(f"  {DIM}API-equivalent estimate · not your actual bill if on a Claude subscription{RESET}")
     tt = cum.get("total_tokens", {})
     if tt and (tt.get("input") or tt.get("output")):
         def _fmt(n):

@@ -98,6 +98,9 @@ The scripts resolve their layout from two env vars. Defaults preserve the legacy
 |---|---|---|
 | `CLAUDE_DAILY_HOME` | script's own directory | `${CLAUDE_PLUGIN_ROOT}` |
 | `CLAUDE_DAILY_DATA` | `~/.claude/metrics` | `${CLAUDE_PLUGIN_DATA}` |
+| `CLAUDE_DAILY_PLAN_LABEL` | unset → generic footer | unset → generic footer |
+
+Set `CLAUDE_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"API"`, etc.) if you want the cost footer to name your plan. Claude Code does not expose the active subscription tier programmatically, so this can't be auto-detected.
 
 ## Requirements
 
