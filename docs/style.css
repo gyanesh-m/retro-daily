@@ -657,24 +657,222 @@ body {
 .lede { font-size: 14px; line-height: 1.7; max-width: 64ch; }
 .lede code { background: var(--bg-soft); color: var(--cyan-bright); padding: 1px 5px; border-radius: 2px; font-size: 12.5px; }
 
-.how { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
-.how li { display: flex; gap: 14px; align-items: flex-start; font-size: 13.5px; max-width: 72ch; }
-.how .num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px; height: 28px;
-  flex-shrink: 0;
-  border: 1px solid var(--cyan);
-  border-radius: 2px;
-  color: var(--cyan-bright);
-  font-weight: 700;
-  font-size: 13px;
-  text-shadow: var(--glow);
+/* ============================================================
+   "How it works" — inline SVG flow diagram (no JS)
+
+   A vertical timeline with a pulse traveling down the trunk.
+   Each step's node, label and (where applicable) branch +
+   output filename fade in in sequence. Total loop = 7.5s.
+   ============================================================ */
+
+.flow-figure {
+  margin: 18px 0 12px;
+  max-width: 720px;
 }
-.how strong { color: var(--white); font-weight: 700; }
-.how code { background: var(--bg-soft); color: var(--cyan-bright); padding: 1px 5px; border-radius: 2px; font-size: 12.5px; }
-.how a { color: var(--cyan-bright); }
+.flow-figure figcaption {
+  margin-top: 8px;
+  max-width: 72ch;
+  font-size: 12.5px;
+}
+.flow-figure figcaption code {
+  background: var(--bg-soft);
+  color: var(--cyan-bright);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.flow {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px;
+  /* Give SVG its own font-family so the JetBrains Mono used elsewhere
+     doesn't override — sans-serif reads better in compact label text. */
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ---- Visual primitives ---- */
+
+.flow .trunk {
+  stroke: var(--cyan);
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.45;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: trunk-draw 7.5s ease-in-out infinite;
+}
+@keyframes trunk-draw {
+  0%, 100% { stroke-dashoffset: 300; opacity: 0.15; }
+  10%      { stroke-dashoffset: 0;   opacity: 0.45; }
+  85%      { stroke-dashoffset: 0;   opacity: 0.45; }
+}
+
+.flow .node {
+  fill: var(--cyan-bright);
+  filter: drop-shadow(0 0 6px rgba(56, 212, 255, 0.55));
+  opacity: 0;
+}
+
+.flow .branch {
+  stroke: var(--cyan);
+  stroke-width: 1.3;
+  stroke-dasharray: 4 4;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+
+.flow .file {
+  fill: rgba(56, 212, 255, 0.08);
+  stroke: var(--cyan);
+  stroke-width: 1;
+  opacity: 0;
+}
+
+.flow text {
+  font-size: 13px;
+  fill: var(--white);
+  opacity: 0;
+}
+.flow text.lbl  { font-weight: 700; }
+.flow text.sub  { font-size: 11px; fill: var(--dim-2); }
+.flow .dim2     { fill: var(--dim); font-weight: 400; font-size: 11.5px; }
+.flow .file-label {
+  font-size: 12px;
+  fill: var(--cyan-bright);
+  font-weight: 600;
+}
+
+/* ---- Pulse traveling down the trunk ---- */
+
+.flow .pulse {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 8px var(--cyan-bright));
+}
+.flow .pulse-g {
+  animation: pulse-travel 7.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-travel {
+  0%, 100%   { transform: translateY(0);    opacity: 0; }
+  8%         { transform: translateY(0);    opacity: 1; }
+  20%        { transform: translateY(70px); opacity: 1; }
+  40%        { transform: translateY(140px); opacity: 1; }
+  60%        { transform: translateY(220px); opacity: 1; }
+  78%        { transform: translateY(300px); opacity: 1; }
+  90%        { transform: translateY(300px); opacity: 0; }
+}
+
+/* ---- Cascade reveal — one offset per step ---- */
+
+/* Step 1 — SessionStart fires */
+.flow .n1, .flow .s1 {
+  animation: fade-in 7.5s ease-out infinite;
+  animation-delay: 0.2s;
+}
+
+/* Step 2 — daily-insights */
+.flow .n2, .flow .s2 {
+  animation: fade-in 7.5s ease-out infinite;
+}
+.flow .n2 { animation-delay: 1.0s; }
+.flow .s2:not(.branch):not(.file) { animation-delay: 1.1s; }
+.flow .branch.s2 {
+  animation: draw 7.5s ease-out infinite;
+  animation-delay: 1.2s;
+}
+.flow .file.s2,
+.flow text.file-label.s2 {
+  animation: fade-in 7.5s ease-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* Step 3 — scout */
+.flow .n3, .flow .s3 {
+  animation: fade-in 7.5s ease-out infinite;
+}
+.flow .n3 { animation-delay: 2.2s; }
+.flow .s3:not(.branch):not(.file) { animation-delay: 2.3s; }
+.flow .branch.s3 {
+  animation: draw 7.5s ease-out infinite;
+  animation-delay: 2.4s;
+}
+.flow .file.s3,
+.flow text.file-label.s3 {
+  animation: fade-in 7.5s ease-out infinite;
+  animation-delay: 2.7s;
+}
+
+/* Step 4 — tag-sessions */
+.flow .n4, .flow .s4 {
+  animation: fade-in 7.5s ease-out infinite;
+}
+.flow .n4 { animation-delay: 3.4s; }
+.flow .s4:not(.branch):not(.file) { animation-delay: 3.5s; }
+.flow .branch.s4 {
+  animation: draw 7.5s ease-out infinite;
+  animation-delay: 3.6s;
+}
+.flow .file.s4,
+.flow text.file-label.s4 {
+  animation: fade-in 7.5s ease-out infinite;
+  animation-delay: 3.9s;
+}
+
+/* Step 5 — dashboard renders (the big finale) */
+.flow .n5, .flow .s5 {
+  animation: fade-in-big 7.5s ease-out infinite;
+}
+.flow .n5 { animation-delay: 4.8s; }
+.flow .s5 { animation-delay: 4.9s; }
+
+@keyframes fade-in {
+  0%, 100% { opacity: 0; }
+  4%       { opacity: 1; }
+  85%      { opacity: 1; }
+  95%      { opacity: 0.4; }
+}
+@keyframes fade-in-big {
+  0%, 100% { opacity: 0; transform: scale(0.9); transform-origin: 80px 340px; }
+  4%       { opacity: 1; transform: scale(1.15); }
+  10%      { opacity: 1; transform: scale(1); }
+  85%      { opacity: 1; transform: scale(1); }
+}
+@keyframes draw {
+  0%, 100%   { stroke-dashoffset: 360; opacity: 0; }
+  4%         { stroke-dashoffset: 360; opacity: 1; }
+  18%        { stroke-dashoffset: 0;   opacity: 1; }
+  85%        { stroke-dashoffset: 0;   opacity: 1; }
+}
+
+/* Pause animation on hover so users can read */
+.flow:hover * {
+  animation-play-state: paused !important;
+}
+
+/* Reduced motion: freeze everything in final state, show diagram statically */
+@media (prefers-reduced-motion: reduce) {
+  .flow *,
+  .flow *::before {
+    animation: none !important;
+  }
+  .flow .trunk     { stroke-dashoffset: 0; opacity: 0.45; }
+  .flow .node      { opacity: 1; }
+  .flow .branch    { stroke-dashoffset: 0; opacity: 1; }
+  .flow .file      { opacity: 1; }
+  .flow text       { opacity: 1; }
+  .flow .pulse-g   { opacity: 0; }
+}
+
+/* Compact screens: stack the file labels under the branches */
+@media (max-width: 720px) {
+  .flow {
+    /* SVG natively scales — viewBox handles the resize. Just keep it. */
+  }
+}
 
 .codeblock {
   background: var(--bg-soft);
