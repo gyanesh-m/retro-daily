@@ -155,12 +155,69 @@
 
     <section class="page-section reveal" data-reveal>
       <h2 class="page-h2">How it works</h2>
-      <ol class="how">
-        <li><span class="num">1</span><span><strong>Daily aggregation.</strong> Reads <code>~/.claude/projects/*.jsonl</code>, computes tool/permission/prompt metrics, writes <code>metrics-store.json</code>. Cached gate: at most once per day.</span></li>
-        <li><span class="num">2</span><span><strong>Hybrid prompt classifier.</strong> Lexical cues classify ~98% of reactions; a zero-shot NLI head (DeBERTa) is the fallback. <a href="https://github.com/gyanesh-m/claude-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">50-pair eval</a>.</span></li>
-        <li><span class="num">3</span><span><strong>Weekly LLM tagging.</strong> A detached <code>claude -p</code> worker labels recent sessions with free-form topics — runs once a week, doesn't block the dashboard.</span></li>
-        <li><span class="num">4</span><span><strong>Scout.</strong> When metrics drop, a separate background worker searches the web and GitHub for actionable tips and surfaces them in the SCOUT FINDINGS block.</span></li>
-      </ol>
+      <p class="lede dim">
+        Every Claude Code SessionStart fires <code>startup.sh</code>, which orchestrates a daily regen + two detached background workers, then renders the dashboard.
+      </p>
+
+      <figure class="flow-figure">
+        <!-- Inline SVG: ~5KB on the wire, pure CSS keyframes drive the
+             animation. No new JS dependencies. Loops every 7.5s.            -->
+        <svg class="flow" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-label="claude-daily SessionStart flow diagram">
+
+          <!-- Vertical timeline trunk -->
+          <line x1="80" y1="40" x2="80" y2="340" class="trunk"/>
+
+          <!-- Pulse that travels down the trunk -->
+          <g class="pulse-g">
+            <circle cx="80" cy="40" r="5" class="pulse"/>
+          </g>
+
+          <!-- ============ Step 1: SessionStart hook fires ============ -->
+          <circle cx="80" cy="40" r="6" class="node n1"/>
+          <text x="100" y="44" class="lbl s1">SessionStart hook fires</text>
+
+          <!-- ============ Step 2: daily-insights → metrics-store.json ============ -->
+          <circle cx="80" cy="110" r="5" class="node n2"/>
+          <text x="100" y="103" class="lbl s2">daily-insights</text>
+          <line x1="80" y1="110" x2="430" y2="110" class="branch s2"/>
+          <rect x="430" y="98" rx="3" ry="3" width="180" height="24" class="file s2"/>
+          <text x="438" y="114" class="file-label s2">metrics-store.json</text>
+
+          <!-- ============ Step 3: scout (background) ============ -->
+          <circle cx="80" cy="180" r="5" class="node n3"/>
+          <text x="100" y="173" class="lbl s3">scout
+            <tspan class="dim2"> · background</tspan>
+          </text>
+          <text x="100" y="190" class="sub s3">claude -p WebSearch+Write</text>
+          <line x1="80" y1="180" x2="430" y2="180" class="branch s3"/>
+          <rect x="430" y="168" rx="3" ry="3" width="180" height="24" class="file s3"/>
+          <text x="438" y="184" class="file-label s3">scout-results.json</text>
+
+          <!-- ============ Step 4: tag-sessions (background) ============ -->
+          <circle cx="80" cy="260" r="5" class="node n4"/>
+          <text x="100" y="253" class="lbl s4">tag-sessions
+            <tspan class="dim2"> · weekly</tspan>
+          </text>
+          <text x="100" y="270" class="sub s4">claude -p Read+Write</text>
+          <line x1="80" y1="260" x2="430" y2="260" class="branch s4"/>
+          <rect x="430" y="248" rx="3" ry="3" width="180" height="24" class="file s4"/>
+          <text x="438" y="264" class="file-label s4">session-tags.json</text>
+
+          <!-- ============ Step 5: dashboard renders ============ -->
+          <circle cx="80" cy="340" r="7" class="node n5"/>
+          <text x="100" y="344" class="lbl s5">dashboard renders
+            <tspan class="dim2"> · at the top of every session</tspan>
+          </text>
+        </svg>
+
+        <figcaption class="dim small">
+          The dashboard never blocks on network — <code>scout</code> and
+          <code>tag-sessions</code> spawn detached <code>claude -p</code>
+          workers via <code>nohup</code>. Their JSON outputs land in
+          <code>$CLAUDE_DAILY_DATA</code> and are picked up by the next session.
+        </figcaption>
+      </figure>
     </section>
 
     <section class="page-section reveal" data-reveal>
