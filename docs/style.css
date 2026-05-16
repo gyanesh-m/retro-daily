@@ -259,27 +259,73 @@ body {
 }
 
 /* ============================================================
-   SessionStart hook output region
+   SessionStart hook output region — pure ASCII teletype
    ============================================================ */
 
 .hook-output {
   padding-top: 6px;
 }
 
-.banner {
-  color: var(--cyan-bright);
-  text-shadow: var(--glow);
-  font-size: 11.5px;
-  line-height: 1.1;
-  margin: 0 0 14px;
+.stream {
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dline {
   white-space: pre;
   overflow-x: auto;
+  min-height: 1.45em;       /* keep blank lines tall enough */
+  /* No transition — appears instantly when inserted. The "print"
+     animation comes from the sequential insert + a brief fade. */
+  opacity: 0;
+  animation: dline-in 80ms ease forwards;
 }
-.tagline {
-  margin: 0 0 28px;
-  letter-spacing: 0.04em;
-  font-size: 14.5px;
-  color: var(--dim-2);
+@keyframes dline-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Color classes used inline inside each `.dline` */
+.dline .cyan      { color: var(--cyan-bright); text-shadow: var(--glow); }
+.dline .cyan-dim  { color: var(--cyan); opacity: 0.85; }
+.dline .white     { color: var(--white); }
+.dline .dim       { color: var(--dim); }
+.dline .green     { color: var(--green); }
+.dline .yellow    { color: var(--yellow); }
+.dline .red       { color: var(--red); }
+.dline .magenta   { color: var(--magenta); }
+.dline .bold      { font-weight: 700; }
+.dline .head      { color: var(--cyan-bright); font-weight: 700; text-shadow: var(--glow); letter-spacing: 0.04em; }
+.dline .rule      { color: var(--cyan); }
+
+/* Heatmap cell colors (4 levels + zero) */
+.dline .h0 { color: #1a2330; }
+.dline .h1 { color: #1f3a4d; }
+.dline .h2 { color: #2a6e69; }
+.dline .h3 { color: #3aaa5b; }
+.dline .h4 { color: var(--green); text-shadow: 0 0 4px rgba(74, 222, 128, 0.5); }
+
+/* Severity dots inline */
+.dline .sev-good { color: var(--green);  text-shadow: 0 0 4px rgba(74, 222, 128, 0.55); }
+.dline .sev-warn { color: var(--yellow); text-shadow: 0 0 4px rgba(250, 204, 21, 0.55); }
+.dline .sev-bad  { color: var(--red);    text-shadow: 0 0 4px rgba(248, 113, 113, 0.55); }
+
+/* Filled gauge segments (█) glow */
+.dline .gauge-fill   { color: var(--yellow); }
+.dline .gauge-empty  { color: var(--dim); opacity: 0.6; }
+.dline .gauge-bad    { color: var(--red); }
+.dline .gauge-warn   { color: var(--yellow); }
+
+/* Sentinel that anchors the bottom of the printed area */
+.print-sentinel {
+  height: 1px;
+  width: 100%;
+}
+
+/* Caret blinking at the very end (only visible once everything printed) */
+.caret-line {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
 }
 
 /* ============================================================
