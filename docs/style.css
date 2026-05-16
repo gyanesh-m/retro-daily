@@ -747,18 +747,21 @@ body {
   font-weight: 600;
 }
 
-/* ---- Spotlight cascade ----
-   Single 8s loop. Each step is visible only during its own slice;
-   the previous step fades out before the next fades in. At the end
-   everything clears and step 1 starts the next loop.
+/* ---- Accumulating cascade ----
+   Single 12s loop. Each step gets 2s in the spotlight at full opacity.
+   When the next step fires the previous step dims to 0.35 but stays
+   visible — by the end of the loop, all 5 steps are on screen (most
+   recent at full, earlier ones dimmed) and the eye can read the whole
+   architecture at once. Then everything fades out and the loop restarts.
 
-   Slices (within the 8s loop):
-     step 1: 0.0s – 1.5s   (0%   – 18.75%)
-     step 2: 1.5s – 3.0s   (18.75% – 37.5%)
-     step 3: 3.0s – 4.5s   (37.5%  – 56.25%)
-     step 4: 4.5s – 6.0s   (56.25% – 75%)
-     step 5: 6.0s – 7.4s   (75%    – 92.5%)
-     clear : 7.4s – 8.0s
+   Timeline (within the 12s loop):
+     0.0s – 2.0s   step 1 active  (full)
+     2.0s – 4.0s   step 2 active  (step 1 dims)
+     4.0s – 6.0s   step 3 active  (steps 1,2 dim)
+     6.0s – 8.0s   step 4 active  (steps 1,2,3 dim)
+     8.0s – 10.0s  step 5 active  (steps 1-4 dim)
+     10.5s – 11.5s everything fades to 0
+     11.5s – 12.0s dark before restart
 */
 
 .flow .pulse {
@@ -766,46 +769,52 @@ body {
   filter: drop-shadow(0 0 8px var(--cyan-bright));
 }
 .flow .pulse-g {
-  animation: pulse-travel 8s linear infinite;
+  animation: pulse-travel 12s linear infinite;
 }
-/* The pulse sits on the active step's node, then jumps to the next.
-   y-positions: step1=40, step2=110, step3=180, step4=260, step5=340.
-   Pulse only shows during the "active" slice of each step. */
+/* Pulse sits at the active step for ~1.8s, then jumps invisibly to the
+   next. Node y-positions: step1=40, step2=110, step3=180, step4=260,
+   step5=340. Translations from base y=40 are 0, 70, 140, 220, 300. */
 @keyframes pulse-travel {
-  0%, 100%   { transform: translateY(0);    opacity: 0; }
-  3%         { transform: translateY(0);    opacity: 1; }   /* show at step1 */
-  17%        { transform: translateY(0);    opacity: 1; }
-  18.75%     { transform: translateY(0);    opacity: 0; }   /* hide */
-  20%        { transform: translateY(70px); opacity: 0; }   /* jump */
-  21.75%     { transform: translateY(70px); opacity: 1; }   /* show at step2 */
-  36%        { transform: translateY(70px); opacity: 1; }
-  37.5%      { transform: translateY(70px); opacity: 0; }
-  39%        { transform: translateY(140px); opacity: 0; }  /* jump */
-  40.75%     { transform: translateY(140px); opacity: 1; }  /* show at step3 */
-  54%        { transform: translateY(140px); opacity: 1; }
-  56.25%     { transform: translateY(140px); opacity: 0; }
-  57.75%     { transform: translateY(220px); opacity: 0; }  /* jump */
-  59.5%      { transform: translateY(220px); opacity: 1; }  /* show at step4 */
-  73%        { transform: translateY(220px); opacity: 1; }
-  75%        { transform: translateY(220px); opacity: 0; }
-  76.5%      { transform: translateY(300px); opacity: 0; }  /* jump */
-  78%        { transform: translateY(300px); opacity: 1; }  /* show at step5 */
-  90%        { transform: translateY(300px); opacity: 1; }
-  92.5%      { transform: translateY(300px); opacity: 0; }
+  0%, 100%  { transform: translateY(0);    opacity: 0; }
+  1%        { transform: translateY(0);    opacity: 1; }
+  16%       { transform: translateY(0);    opacity: 1; }
+  16.5%     { transform: translateY(0);    opacity: 0; }
+  17%       { transform: translateY(70px); opacity: 0; }
+  17.5%     { transform: translateY(70px); opacity: 1; }
+  33%       { transform: translateY(70px); opacity: 1; }
+  33.5%     { transform: translateY(70px); opacity: 0; }
+  34%       { transform: translateY(140px); opacity: 0; }
+  34.5%     { transform: translateY(140px); opacity: 1; }
+  50%       { transform: translateY(140px); opacity: 1; }
+  50.5%     { transform: translateY(140px); opacity: 0; }
+  51%       { transform: translateY(220px); opacity: 0; }
+  51.5%     { transform: translateY(220px); opacity: 1; }
+  66%       { transform: translateY(220px); opacity: 1; }
+  66.5%     { transform: translateY(220px); opacity: 0; }
+  67%       { transform: translateY(300px); opacity: 0; }
+  67.5%     { transform: translateY(300px); opacity: 1; }
+  87.5%     { transform: translateY(300px); opacity: 1; }
+  92%       { transform: translateY(300px); opacity: 0; }
 }
 
-/* ---- Per-step spotlight keyframes ---- */
+/* ---- Per-step accumulate-then-dim keyframes ----
+   Each step fires at its own time, holds at full opacity for 2s, then
+   dims to 0.35 (still visible) and stays dim until the loop's
+   end-of-cycle fade-out at 87.5%–92%. Branches and file boxes track
+   their step's opacity but draw stroke-dashoffset → 0 on entry.       */
 
 /* Step 1 — SessionStart hook fires */
 .flow .n1, .flow .s1 {
-  animation: spot-1 8s ease-in-out infinite;
+  animation: acc-1 12s ease-in-out infinite;
   opacity: 0;
 }
-@keyframes spot-1 {
+@keyframes acc-1 {
   0%        { opacity: 0; }
-  3%        { opacity: 1; }
+  1.5%      { opacity: 1; }
   16%       { opacity: 1; }
-  18.75%    { opacity: 0; }
+  18%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
 
@@ -813,39 +822,45 @@ body {
 .flow .n2,
 .flow .lbl.s2,
 .flow .sub.s2 {
-  animation: spot-2 8s ease-in-out infinite;
+  animation: acc-2 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .file.s2,
 .flow .file-label.s2 {
-  animation: spot-2-late 8s ease-in-out infinite;
+  animation: acc-2-late 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .branch.s2 {
-  animation: spot-2-branch 8s ease-in-out infinite;
+  animation: acc-2-branch 12s ease-in-out infinite;
   opacity: 0;
   stroke-dashoffset: 360;
 }
-@keyframes spot-2 {
-  0%, 18%   { opacity: 0; }
-  21%       { opacity: 1; }
-  34%       { opacity: 1; }
-  37.5%     { opacity: 0; }
+@keyframes acc-2 {
+  0%, 16%   { opacity: 0; }
+  18%       { opacity: 1; }
+  33%       { opacity: 1; }
+  35%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
-@keyframes spot-2-branch {
-  0%, 22%   { opacity: 0; stroke-dashoffset: 360; }
-  24%       { opacity: 1; stroke-dashoffset: 360; }
-  30%       { opacity: 1; stroke-dashoffset: 0; }
-  34%       { opacity: 1; stroke-dashoffset: 0; }
-  37.5%     { opacity: 0; stroke-dashoffset: 0; }
+@keyframes acc-2-branch {
+  0%, 20%   { opacity: 0; stroke-dashoffset: 360; }
+  22%       { opacity: 1; stroke-dashoffset: 360; }
+  28%       { opacity: 1; stroke-dashoffset: 0; }
+  33%       { opacity: 1; stroke-dashoffset: 0; }
+  35%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
   100%      { opacity: 0; stroke-dashoffset: 0; }
 }
-@keyframes spot-2-late {
-  0%, 26%   { opacity: 0; }
-  30%       { opacity: 1; }
-  34%       { opacity: 1; }
-  37.5%     { opacity: 0; }
+@keyframes acc-2-late {
+  0%, 25%   { opacity: 0; }
+  29%       { opacity: 1; }
+  33%       { opacity: 1; }
+  35%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
 
@@ -853,39 +868,45 @@ body {
 .flow .n3,
 .flow .lbl.s3,
 .flow .sub.s3 {
-  animation: spot-3 8s ease-in-out infinite;
+  animation: acc-3 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .file.s3,
 .flow .file-label.s3 {
-  animation: spot-3-late 8s ease-in-out infinite;
+  animation: acc-3-late 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .branch.s3 {
-  animation: spot-3-branch 8s ease-in-out infinite;
+  animation: acc-3-branch 12s ease-in-out infinite;
   opacity: 0;
   stroke-dashoffset: 360;
 }
-@keyframes spot-3 {
-  0%, 37.5% { opacity: 0; }
-  40%       { opacity: 1; }
-  52%       { opacity: 1; }
-  56.25%    { opacity: 0; }
+@keyframes acc-3 {
+  0%, 33%   { opacity: 0; }
+  35%       { opacity: 1; }
+  50%       { opacity: 1; }
+  52%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
-@keyframes spot-3-branch {
-  0%, 40%   { opacity: 0; stroke-dashoffset: 360; }
-  43%       { opacity: 1; stroke-dashoffset: 360; }
-  49%       { opacity: 1; stroke-dashoffset: 0; }
-  52%       { opacity: 1; stroke-dashoffset: 0; }
-  56.25%    { opacity: 0; stroke-dashoffset: 0; }
+@keyframes acc-3-branch {
+  0%, 37%   { opacity: 0; stroke-dashoffset: 360; }
+  39%       { opacity: 1; stroke-dashoffset: 360; }
+  45%       { opacity: 1; stroke-dashoffset: 0; }
+  50%       { opacity: 1; stroke-dashoffset: 0; }
+  52%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
   100%      { opacity: 0; stroke-dashoffset: 0; }
 }
-@keyframes spot-3-late {
-  0%, 44%   { opacity: 0; }
-  48%       { opacity: 1; }
-  52%       { opacity: 1; }
-  56.25%    { opacity: 0; }
+@keyframes acc-3-late {
+  0%, 42%   { opacity: 0; }
+  46%       { opacity: 1; }
+  50%       { opacity: 1; }
+  52%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
 
@@ -893,54 +914,60 @@ body {
 .flow .n4,
 .flow .lbl.s4,
 .flow .sub.s4 {
-  animation: spot-4 8s ease-in-out infinite;
+  animation: acc-4 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .file.s4,
 .flow .file-label.s4 {
-  animation: spot-4-late 8s ease-in-out infinite;
+  animation: acc-4-late 12s ease-in-out infinite;
   opacity: 0;
 }
 .flow .branch.s4 {
-  animation: spot-4-branch 8s ease-in-out infinite;
+  animation: acc-4-branch 12s ease-in-out infinite;
   opacity: 0;
   stroke-dashoffset: 360;
 }
-@keyframes spot-4 {
-  0%, 56%   { opacity: 0; }
-  59%       { opacity: 1; }
-  71%       { opacity: 1; }
-  75%       { opacity: 0; }
+@keyframes acc-4 {
+  0%, 50%   { opacity: 0; }
+  52%       { opacity: 1; }
+  66%       { opacity: 1; }
+  68%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
-@keyframes spot-4-branch {
-  0%, 58%   { opacity: 0; stroke-dashoffset: 360; }
-  62%       { opacity: 1; stroke-dashoffset: 360; }
-  68%       { opacity: 1; stroke-dashoffset: 0; }
-  71%       { opacity: 1; stroke-dashoffset: 0; }
-  75%       { opacity: 0; stroke-dashoffset: 0; }
+@keyframes acc-4-branch {
+  0%, 54%   { opacity: 0; stroke-dashoffset: 360; }
+  56%       { opacity: 1; stroke-dashoffset: 360; }
+  62%       { opacity: 1; stroke-dashoffset: 0; }
+  66%       { opacity: 1; stroke-dashoffset: 0; }
+  68%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
   100%      { opacity: 0; stroke-dashoffset: 0; }
 }
-@keyframes spot-4-late {
-  0%, 62%   { opacity: 0; }
+@keyframes acc-4-late {
+  0%, 58%   { opacity: 0; }
+  62%       { opacity: 1; }
   66%       { opacity: 1; }
-  71%       { opacity: 1; }
-  75%       { opacity: 0; }
+  68%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
   100%      { opacity: 0; }
 }
 
-/* Step 5 — dashboard renders (the finale, slight scale pop) */
+/* Step 5 — dashboard renders (finale, holds at full until the clear) */
 .flow .n5, .flow .s5 {
-  animation: spot-5 8s ease-in-out infinite;
+  animation: acc-5 12s ease-in-out infinite;
   opacity: 0;
   transform-origin: 80px 340px;
 }
-@keyframes spot-5 {
-  0%, 75%   { opacity: 0; transform: scale(0.9); }
-  77%       { opacity: 1; transform: scale(1.15); }
-  82%       { opacity: 1; transform: scale(1); }
-  90%       { opacity: 1; transform: scale(1); }
-  92.5%     { opacity: 0; transform: scale(1); }
+@keyframes acc-5 {
+  0%, 66%   { opacity: 0; transform: scale(0.9); }
+  68%       { opacity: 1; transform: scale(1.15); }
+  72%       { opacity: 1; transform: scale(1); }
+  87.5%     { opacity: 1; transform: scale(1); }
+  92%       { opacity: 0; transform: scale(1); }
   100%      { opacity: 0; transform: scale(0.9); }
 }
 
