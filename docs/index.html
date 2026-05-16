@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>claude-daily — retro analytics for Claude Code</title>
+  <meta name="description" content="A daily dashboard for your Claude Code sessions. Renders at the top of every session via a SessionStart hook." />
+  <meta property="og:title" content="claude-daily" />
+  <meta property="og:description" content="Retro analytics dashboard for Claude Code sessions." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- CRT overlay layers (scanlines + flicker + vignette) -->
+  <div class="crt scanlines"></div>
+  <div class="crt vignette"></div>
+  <div class="crt flicker"></div>
+
+  <main class="page">
+
+    <!-- =================== TERMINAL WINDOW =================== -->
+    <section class="terminal">
+      <!-- Window chrome -->
+      <header class="titlebar">
+        <span class="tl-dot tl-red"></span>
+        <span class="tl-dot tl-yellow"></span>
+        <span class="tl-dot tl-green"></span>
+        <span class="tl-title">~/dev/github.com/gyanesh-m/claude-daily — claude — 120×40</span>
+      </header>
+
+      <!-- Terminal body -->
+      <div class="tty">
+
+        <!-- Step 1: prompt with the user typing `claude`.
+             Format: <arrow> <dir> git:(<branch>) <typed cmd>           -->
+        <div class="line prompt-line">
+          <span class="ps1-arrow"><span class="a1">❯</span><span class="a2">→</span></span>
+          <span class="ps1-path">claude-daily</span>
+          <span class="ps1-git">git:(<span class="ps1-branch">main</span>)</span>
+          <span class="ps1-mark">❯</span>
+          <span class="typed" id="typed-cmd"></span>
+          <span class="cmd-cursor"></span>
+        </div>
+
+        <!-- Step 2: Claude Code welcome screen (revealed after enter).
+             No box — a coral sprite on the left, 3 lines of label on the right. -->
+        <div class="welcome stage" id="welcome">
+          <div class="welcome-sprite" aria-hidden="true">
+            <!-- Squat coral mascot — 16x12 grid, 4px per pixel.            -->
+            <svg viewBox="0 0 64 48" width="64" height="48" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <!-- Outer body (slightly darker rim) -->
+              <g fill="#c95a48">
+                <rect x="8"  y="4"  width="48" height="4"/>
+                <rect x="4"  y="8"  width="56" height="4"/>
+                <rect x="4"  y="36" width="56" height="4"/>
+                <rect x="8"  y="40" width="16" height="4"/>
+                <rect x="40" y="40" width="16" height="4"/>
+                <rect x="4"  y="12" width="4"  height="24"/>
+                <rect x="56" y="12" width="4"  height="24"/>
+              </g>
+              <!-- Body fill -->
+              <g fill="#e8826a">
+                <rect x="8"  y="8"  width="48" height="28"/>
+                <rect x="12" y="36" width="40" height="4"/>
+                <rect x="12" y="40" width="12" height="4"/>
+                <rect x="40" y="40" width="12" height="4"/>
+              </g>
+              <!-- Top highlight stripe -->
+              <g fill="#f6a98e">
+                <rect x="12" y="8"  width="40" height="2"/>
+                <rect x="8"  y="10" width="4"  height="2"/>
+              </g>
+              <!-- Eye whites / sockets -->
+              <g fill="#3a1810">
+                <rect x="18" y="18" width="8"  height="8"/>
+                <rect x="38" y="18" width="8"  height="8"/>
+              </g>
+              <!-- Eye highlights -->
+              <g fill="#fff1e6">
+                <rect x="22" y="20" width="2"  height="2"/>
+                <rect x="42" y="20" width="2"  height="2"/>
+              </g>
+              <!-- Tiny smile -->
+              <g fill="#3a1810">
+                <rect x="28" y="30" width="8"  height="2"/>
+                <rect x="26" y="28" width="2"  height="2"/>
+                <rect x="36" y="28" width="2"  height="2"/>
+              </g>
+            </svg>
+          </div>
+          <div class="welcome-text">
+            <div class="wl-title">
+              <span class="bold white">Claude Code</span>
+              <span class="dim">v2.1.143</span>
+            </div>
+            <div class="wl-model dim">Sonnet 4.6 with high effort · Claude Max</div>
+            <div class="wl-cwd dim">~/dev/github.com/gyanesh-m/claude-daily</div>
+          </div>
+        </div>
+
+        <!-- Step 2b: the input prompt that follows the welcome screen.       -->
+        <div class="input-line stage" id="input-line">
+          <span class="input-arrow">›</span>
+          <span class="input-placeholder">Try "summarize my last 7 days"</span>
+        </div>
+
+        <!-- Step 2c: divider between the input area and the SessionStart
+             hook output. Empty line in real terminal.                       -->
+        <div class="divider stage" id="divider"></div>
+
+        <!-- Step 3: SessionStart hook fires; everything below is its output -->
+        <div class="hook-output stage" id="hook-output">
+
+          <pre class="banner" id="ascii-banner"></pre>
+
+          <p class="tagline">retro analytics for <span class="cyan">claude code</span><span class="cursor"></span></p>
+
+          <!-- ALL-TIME -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">A L L &nbsp;-&nbsp; T I M E</h2>
+            <div class="row stat-row">
+              <span class="big">1197</span><span class="dim">sessions</span>
+              <span class="big">10626</span><span class="dim">tools</span>
+              <span class="big">21</span><span class="dim">days</span>
+              <span class="big">15</span><span class="dim">projects</span>
+              <span class="big green">$6436.49</span><span class="dim">est.</span>
+            </div>
+            <p class="dim small">API-equivalent estimate · not your actual bill if on a Claude subscription</p>
+            <p class="dim small token-line">
+              <span class="dim">tokens</span>
+              <span class="white">239.0K</span> <span class="dim">in</span>
+              <span class="white">10.6M</span> <span class="dim">out</span>
+              <span class="white">1.82B</span> <span class="dim">cache-read</span>
+              <span class="white">127.2M</span> <span class="dim">cache-write</span>
+            </p>
+          </section>
+
+          <!-- LAST 7 DAYS -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">L A S T &nbsp; 7 &nbsp; D A Y S</h2>
+            <div class="row stat-row">
+              <span class="big">10</span><span class="dim">sessions</span>
+              <span class="big">632</span><span class="dim">tools</span>
+              <span class="big">3</span><span class="dim">days</span>
+              <span class="big">4</span><span class="dim">projects</span>
+              <span class="big green">$1040.15</span><span class="dim">est.</span>
+            </div>
+            <p class="dim small">
+              vs prior 7d &nbsp;
+              sessions <span class="red">↓72%</span> &nbsp;
+              tools <span class="red">↓71%</span> &nbsp;
+              cost <span class="red">↓62%</span>
+            </p>
+            <div class="weekbars" id="weekbars"></div>
+          </section>
+
+          <!-- COMPETENCY -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">C O M P E T E N C Y</h2>
+            <div class="competency">
+              <div class="gauge-wide" data-value="62.1" data-max="100">
+                <div class="gauge-track">
+                  <div class="gauge-fill" style="--target: 62.1%"></div>
+                </div>
+                <div class="gauge-label">
+                  <span class="big white">62.1</span><span class="dim">/100</span>
+                  <span class="grade yellow">&nbsp;&nbsp;D</span>
+                </div>
+              </div>
+            </div>
+            <p class="small dim breakdown">
+              breakdown &nbsp;
+              <span class="chip"><span class="dim">Edit/Read</span> <span class="green">100</span></span>
+              <span class="chip"><span class="dim">Auto-approve</span> <span class="red">29</span></span>
+              <span class="chip"><span class="dim">First-try</span> <span class="green">100</span></span>
+              <span class="chip"><span class="dim">Corrections</span> <span class="yellow">50</span></span>
+              <span class="chip"><span class="dim">Tool errors</span> <span class="red">28</span></span>
+              <span class="chip"><span class="dim">Ctx hygiene</span> <span class="yellow">67</span></span>
+            </p>
+          </section>
+
+          <!-- EFFICIENCY -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">E F F I C I E N C Y</h2>
+            <div class="efficiency" id="efficiency-grid">
+              <div class="eff-head dim">
+                <span>metric</span><span>value</span><span>14-day trend</span><span>7d</span><span>30d</span><span>status</span>
+              </div>
+              <!-- rows injected by app.js -->
+            </div>
+            <p class="small dim prompt-summary">
+              prompts:
+              <span class="green">475 approved</span> ·
+              <span class="cyan">678 new</span> ·
+              <span class="yellow">117 refined</span> ·
+              <span class="magenta">112 corrected</span>
+            </p>
+          </section>
+
+          <!-- CONTRIBUTIONS -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">C O N T R I B U T I O N S</h2>
+            <div class="contributions" id="contributions"></div>
+            <p class="small dim">
+              less <span class="heat-key" aria-hidden="true">
+                <span class="hk-0"></span><span class="hk-1"></span><span class="hk-2"></span><span class="hk-3"></span><span class="hk-4"></span>
+              </span> more &nbsp;
+              <span class="white">1197</span> sessions across <span class="white">21</span> days this year
+            </p>
+          </section>
+
+          <!-- YESTERDAY -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">Y E S T E R D A Y</h2>
+            <div class="row stat-row">
+              <span class="big">1</span><span class="dim">sessions</span>
+              <span class="big">2</span><span class="dim">tools</span>
+              <span class="big green">$3.16</span><span class="dim">est.</span>
+              <span class="dim small">[gyanesh-m-scrape-apps-for-splitwise]</span>
+            </div>
+            <p class="dim small">branches main</p>
+          </section>
+
+          <!-- FOCUS AREAS -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">F O C U S &nbsp; A R E A S</h2>
+            <div class="focus" id="focus-areas"></div>
+          </section>
+
+          <!-- SCOUT FINDINGS -->
+          <section class="block stage" data-reveal>
+            <h2 class="rule">S C O U T &nbsp; F I N D I N G S</h2>
+            <p class="small dim">6 queries · 2026-05-04 · full detail: <span class="white">scout-results.json</span></p>
+            <div class="scout" id="scout-findings"></div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- Claude Code status bar (always pinned to the bottom of the
+           terminal window, like the real CLI). -->
+      <footer class="status-bar">
+        <div class="sb-left">
+          <span class="sb-model">sonnet high</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-path">claude-daily</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-branch">main 🌿</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-time" id="sb-time">01:47</span>
+        </div>
+        <div class="sb-right">
+          <span class="sb-dot"></span>
+          <span class="sb-effort">high · /effort</span>
+        </div>
+      </footer>
+    </section>
+
+    <!-- =================== PAGE-LEVEL CONTENT (outside terminal) =================== -->
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">What you just saw</h2>
+      <p class="lede dim">
+        Everything inside the terminal above is the actual output of the
+        <code>SessionStart</code> hook — what claude-daily prints every time
+        you start a new Claude Code session. The data shown is a sample;
+        your dashboard renders from your own <code>~/.claude/projects/*.jsonl</code> history.
+      </p>
+    </section>
+
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">How it works</h2>
+      <ol class="how">
+        <li><span class="num">1</span><span><strong>Daily aggregation.</strong> Reads <code>~/.claude/projects/*.jsonl</code>, computes tool/permission/prompt metrics, writes <code>metrics-store.json</code>. Cached gate: at most once per day.</span></li>
+        <li><span class="num">2</span><span><strong>Hybrid prompt classifier.</strong> Lexical cues classify ~98% of reactions; a zero-shot NLI head (DeBERTa) is the fallback. <a href="https://github.com/gyanesh-m/claude-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">50-pair eval</a>.</span></li>
+        <li><span class="num">3</span><span><strong>Weekly LLM tagging.</strong> A detached <code>claude -p</code> worker labels recent sessions with free-form topics — runs once a week, doesn't block the dashboard.</span></li>
+        <li><span class="num">4</span><span><strong>Scout.</strong> When metrics drop, a separate background worker searches the web and GitHub for actionable tips and surfaces them in the SCOUT FINDINGS block.</span></li>
+      </ol>
+    </section>
+
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">Install</h2>
+      <p class="dim">Inside Claude Code:</p>
+      <pre class="codeblock">
+<span class="dim">$</span> /plugin marketplace add gyanesh-m/claude-daily
+<span class="dim">$</span> /plugin install claude-daily@claude-daily
+<span class="dim">$</span> /reload-plugins</pre>
+      <p class="dim">Or standalone:</p>
+      <pre class="codeblock">
+<span class="dim">$</span> git clone https://github.com/gyanesh-m/claude-daily.git
+<span class="dim">$</span> cd claude-daily && ./install.sh</pre>
+      <div class="cta">
+        <a class="btn" href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">view on github</a>
+        <a class="btn ghost" href="https://github.com/gyanesh-m/claude-daily/pull/1" target="_blank" rel="noopener">pr #1</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p class="dim small">
+        <a href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">github</a> ·
+        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/README.md" target="_blank" rel="noopener">readme</a> ·
+        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">eval set</a>
+      </p>
+      <p class="ascii small dim">[ press any key to continue ]</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
