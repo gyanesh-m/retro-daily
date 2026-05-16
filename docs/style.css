@@ -747,110 +747,201 @@ body {
   font-weight: 600;
 }
 
-/* ---- Pulse traveling down the trunk ---- */
+/* ---- Spotlight cascade ----
+   Single 8s loop. Each step is visible only during its own slice;
+   the previous step fades out before the next fades in. At the end
+   everything clears and step 1 starts the next loop.
+
+   Slices (within the 8s loop):
+     step 1: 0.0s – 1.5s   (0%   – 18.75%)
+     step 2: 1.5s – 3.0s   (18.75% – 37.5%)
+     step 3: 3.0s – 4.5s   (37.5%  – 56.25%)
+     step 4: 4.5s – 6.0s   (56.25% – 75%)
+     step 5: 6.0s – 7.4s   (75%    – 92.5%)
+     clear : 7.4s – 8.0s
+*/
 
 .flow .pulse {
   fill: #ffffff;
   filter: drop-shadow(0 0 8px var(--cyan-bright));
 }
 .flow .pulse-g {
-  animation: pulse-travel 7.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-travel 8s linear infinite;
 }
+/* The pulse sits on the active step's node, then jumps to the next.
+   y-positions: step1=40, step2=110, step3=180, step4=260, step5=340.
+   Pulse only shows during the "active" slice of each step. */
 @keyframes pulse-travel {
   0%, 100%   { transform: translateY(0);    opacity: 0; }
-  8%         { transform: translateY(0);    opacity: 1; }
-  20%        { transform: translateY(70px); opacity: 1; }
-  40%        { transform: translateY(140px); opacity: 1; }
-  60%        { transform: translateY(220px); opacity: 1; }
-  78%        { transform: translateY(300px); opacity: 1; }
-  90%        { transform: translateY(300px); opacity: 0; }
+  3%         { transform: translateY(0);    opacity: 1; }   /* show at step1 */
+  17%        { transform: translateY(0);    opacity: 1; }
+  18.75%     { transform: translateY(0);    opacity: 0; }   /* hide */
+  20%        { transform: translateY(70px); opacity: 0; }   /* jump */
+  21.75%     { transform: translateY(70px); opacity: 1; }   /* show at step2 */
+  36%        { transform: translateY(70px); opacity: 1; }
+  37.5%      { transform: translateY(70px); opacity: 0; }
+  39%        { transform: translateY(140px); opacity: 0; }  /* jump */
+  40.75%     { transform: translateY(140px); opacity: 1; }  /* show at step3 */
+  54%        { transform: translateY(140px); opacity: 1; }
+  56.25%     { transform: translateY(140px); opacity: 0; }
+  57.75%     { transform: translateY(220px); opacity: 0; }  /* jump */
+  59.5%      { transform: translateY(220px); opacity: 1; }  /* show at step4 */
+  73%        { transform: translateY(220px); opacity: 1; }
+  75%        { transform: translateY(220px); opacity: 0; }
+  76.5%      { transform: translateY(300px); opacity: 0; }  /* jump */
+  78%        { transform: translateY(300px); opacity: 1; }  /* show at step5 */
+  90%        { transform: translateY(300px); opacity: 1; }
+  92.5%      { transform: translateY(300px); opacity: 0; }
 }
 
-/* ---- Cascade reveal — one offset per step ---- */
+/* ---- Per-step spotlight keyframes ---- */
 
-/* Step 1 — SessionStart fires */
+/* Step 1 — SessionStart hook fires */
 .flow .n1, .flow .s1 {
-  animation: fade-in 7.5s ease-out infinite;
-  animation-delay: 0.2s;
+  animation: spot-1 8s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes spot-1 {
+  0%        { opacity: 0; }
+  3%        { opacity: 1; }
+  16%       { opacity: 1; }
+  18.75%    { opacity: 0; }
+  100%      { opacity: 0; }
 }
 
 /* Step 2 — daily-insights */
-.flow .n2, .flow .s2 {
-  animation: fade-in 7.5s ease-out infinite;
-}
-.flow .n2 { animation-delay: 1.0s; }
-.flow .s2:not(.branch):not(.file) { animation-delay: 1.1s; }
-.flow .branch.s2 {
-  animation: draw 7.5s ease-out infinite;
-  animation-delay: 1.2s;
+.flow .n2,
+.flow .lbl.s2,
+.flow .sub.s2 {
+  animation: spot-2 8s ease-in-out infinite;
+  opacity: 0;
 }
 .flow .file.s2,
-.flow text.file-label.s2 {
-  animation: fade-in 7.5s ease-out infinite;
-  animation-delay: 1.5s;
+.flow .file-label.s2 {
+  animation: spot-2-late 8s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s2 {
+  animation: spot-2-branch 8s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes spot-2 {
+  0%, 18%   { opacity: 0; }
+  21%       { opacity: 1; }
+  34%       { opacity: 1; }
+  37.5%     { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes spot-2-branch {
+  0%, 22%   { opacity: 0; stroke-dashoffset: 360; }
+  24%       { opacity: 1; stroke-dashoffset: 360; }
+  30%       { opacity: 1; stroke-dashoffset: 0; }
+  34%       { opacity: 1; stroke-dashoffset: 0; }
+  37.5%     { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes spot-2-late {
+  0%, 26%   { opacity: 0; }
+  30%       { opacity: 1; }
+  34%       { opacity: 1; }
+  37.5%     { opacity: 0; }
+  100%      { opacity: 0; }
 }
 
 /* Step 3 — scout */
-.flow .n3, .flow .s3 {
-  animation: fade-in 7.5s ease-out infinite;
-}
-.flow .n3 { animation-delay: 2.2s; }
-.flow .s3:not(.branch):not(.file) { animation-delay: 2.3s; }
-.flow .branch.s3 {
-  animation: draw 7.5s ease-out infinite;
-  animation-delay: 2.4s;
+.flow .n3,
+.flow .lbl.s3,
+.flow .sub.s3 {
+  animation: spot-3 8s ease-in-out infinite;
+  opacity: 0;
 }
 .flow .file.s3,
-.flow text.file-label.s3 {
-  animation: fade-in 7.5s ease-out infinite;
-  animation-delay: 2.7s;
+.flow .file-label.s3 {
+  animation: spot-3-late 8s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s3 {
+  animation: spot-3-branch 8s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes spot-3 {
+  0%, 37.5% { opacity: 0; }
+  40%       { opacity: 1; }
+  52%       { opacity: 1; }
+  56.25%    { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes spot-3-branch {
+  0%, 40%   { opacity: 0; stroke-dashoffset: 360; }
+  43%       { opacity: 1; stroke-dashoffset: 360; }
+  49%       { opacity: 1; stroke-dashoffset: 0; }
+  52%       { opacity: 1; stroke-dashoffset: 0; }
+  56.25%    { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes spot-3-late {
+  0%, 44%   { opacity: 0; }
+  48%       { opacity: 1; }
+  52%       { opacity: 1; }
+  56.25%    { opacity: 0; }
+  100%      { opacity: 0; }
 }
 
 /* Step 4 — tag-sessions */
-.flow .n4, .flow .s4 {
-  animation: fade-in 7.5s ease-out infinite;
-}
-.flow .n4 { animation-delay: 3.4s; }
-.flow .s4:not(.branch):not(.file) { animation-delay: 3.5s; }
-.flow .branch.s4 {
-  animation: draw 7.5s ease-out infinite;
-  animation-delay: 3.6s;
+.flow .n4,
+.flow .lbl.s4,
+.flow .sub.s4 {
+  animation: spot-4 8s ease-in-out infinite;
+  opacity: 0;
 }
 .flow .file.s4,
-.flow text.file-label.s4 {
-  animation: fade-in 7.5s ease-out infinite;
-  animation-delay: 3.9s;
+.flow .file-label.s4 {
+  animation: spot-4-late 8s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s4 {
+  animation: spot-4-branch 8s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes spot-4 {
+  0%, 56%   { opacity: 0; }
+  59%       { opacity: 1; }
+  71%       { opacity: 1; }
+  75%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes spot-4-branch {
+  0%, 58%   { opacity: 0; stroke-dashoffset: 360; }
+  62%       { opacity: 1; stroke-dashoffset: 360; }
+  68%       { opacity: 1; stroke-dashoffset: 0; }
+  71%       { opacity: 1; stroke-dashoffset: 0; }
+  75%       { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes spot-4-late {
+  0%, 62%   { opacity: 0; }
+  66%       { opacity: 1; }
+  71%       { opacity: 1; }
+  75%       { opacity: 0; }
+  100%      { opacity: 0; }
 }
 
-/* Step 5 — dashboard renders (the big finale) */
+/* Step 5 — dashboard renders (the finale, slight scale pop) */
 .flow .n5, .flow .s5 {
-  animation: fade-in-big 7.5s ease-out infinite;
+  animation: spot-5 8s ease-in-out infinite;
+  opacity: 0;
+  transform-origin: 80px 340px;
 }
-.flow .n5 { animation-delay: 4.8s; }
-.flow .s5 { animation-delay: 4.9s; }
-
-@keyframes fade-in {
-  0%, 100% { opacity: 0; }
-  4%       { opacity: 1; }
-  85%      { opacity: 1; }
-  95%      { opacity: 0.4; }
-}
-@keyframes fade-in-big {
-  0%, 100% { opacity: 0; transform: scale(0.9); transform-origin: 80px 340px; }
-  4%       { opacity: 1; transform: scale(1.15); }
-  10%      { opacity: 1; transform: scale(1); }
-  85%      { opacity: 1; transform: scale(1); }
-}
-@keyframes draw {
-  0%, 100%   { stroke-dashoffset: 360; opacity: 0; }
-  4%         { stroke-dashoffset: 360; opacity: 1; }
-  18%        { stroke-dashoffset: 0;   opacity: 1; }
-  85%        { stroke-dashoffset: 0;   opacity: 1; }
-}
-
-/* Pause animation on hover so users can read */
-.flow:hover * {
-  animation-play-state: paused !important;
+@keyframes spot-5 {
+  0%, 75%   { opacity: 0; transform: scale(0.9); }
+  77%       { opacity: 1; transform: scale(1.15); }
+  82%       { opacity: 1; transform: scale(1); }
+  90%       { opacity: 1; transform: scale(1); }
+  92.5%     { opacity: 0; transform: scale(1); }
+  100%      { opacity: 0; transform: scale(0.9); }
 }
 
 /* Reduced motion: freeze everything in final state, show diagram statically */
