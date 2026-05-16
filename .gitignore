@@ -6,3 +6,7 @@ tests/eval.local-unlabeled.json
 __pycache__/
 *.pyc
 .venv/
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
