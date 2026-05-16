@@ -111,132 +111,15 @@
              hook output. Empty line in real terminal.                       -->
         <div class="divider stage" id="divider"></div>
 
-        <!-- Step 3: SessionStart hook fires; everything below is its output -->
+        <!-- Step 3: SessionStart hook fires; the dashboard streams in
+             line-by-line as the user scrolls. Lines are inserted before
+             the sentinel by app.js. -->
         <div class="hook-output stage" id="hook-output">
-
-          <pre class="banner" id="ascii-banner"></pre>
-
-          <p class="tagline">retro analytics for <span class="cyan">claude code</span><span class="cursor"></span></p>
-
-          <!-- ALL-TIME -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">A L L &nbsp;-&nbsp; T I M E</h2>
-            <div class="row stat-row">
-              <span class="big">1197</span><span class="dim">sessions</span>
-              <span class="big">10626</span><span class="dim">tools</span>
-              <span class="big">21</span><span class="dim">days</span>
-              <span class="big">15</span><span class="dim">projects</span>
-              <span class="big green">$6436.49</span><span class="dim">est.</span>
-            </div>
-            <p class="dim small">API-equivalent estimate · not your actual bill if on a Claude subscription</p>
-            <p class="dim small token-line">
-              <span class="dim">tokens</span>
-              <span class="white">239.0K</span> <span class="dim">in</span>
-              <span class="white">10.6M</span> <span class="dim">out</span>
-              <span class="white">1.82B</span> <span class="dim">cache-read</span>
-              <span class="white">127.2M</span> <span class="dim">cache-write</span>
-            </p>
-          </section>
-
-          <!-- LAST 7 DAYS -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">L A S T &nbsp; 7 &nbsp; D A Y S</h2>
-            <div class="row stat-row">
-              <span class="big">10</span><span class="dim">sessions</span>
-              <span class="big">632</span><span class="dim">tools</span>
-              <span class="big">3</span><span class="dim">days</span>
-              <span class="big">4</span><span class="dim">projects</span>
-              <span class="big green">$1040.15</span><span class="dim">est.</span>
-            </div>
-            <p class="dim small">
-              vs prior 7d &nbsp;
-              sessions <span class="red">↓72%</span> &nbsp;
-              tools <span class="red">↓71%</span> &nbsp;
-              cost <span class="red">↓62%</span>
-            </p>
-            <div class="weekbars" id="weekbars"></div>
-          </section>
-
-          <!-- COMPETENCY -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">C O M P E T E N C Y</h2>
-            <div class="competency">
-              <div class="gauge-wide" data-value="62.1" data-max="100">
-                <div class="gauge-track">
-                  <div class="gauge-fill" style="--target: 62.1%"></div>
-                </div>
-                <div class="gauge-label">
-                  <span class="big white">62.1</span><span class="dim">/100</span>
-                  <span class="grade yellow">&nbsp;&nbsp;D</span>
-                </div>
-              </div>
-            </div>
-            <p class="small dim breakdown">
-              breakdown &nbsp;
-              <span class="chip"><span class="dim">Edit/Read</span> <span class="green">100</span></span>
-              <span class="chip"><span class="dim">Auto-approve</span> <span class="red">29</span></span>
-              <span class="chip"><span class="dim">First-try</span> <span class="green">100</span></span>
-              <span class="chip"><span class="dim">Corrections</span> <span class="yellow">50</span></span>
-              <span class="chip"><span class="dim">Tool errors</span> <span class="red">28</span></span>
-              <span class="chip"><span class="dim">Ctx hygiene</span> <span class="yellow">67</span></span>
-            </p>
-          </section>
-
-          <!-- EFFICIENCY -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">E F F I C I E N C Y</h2>
-            <div class="efficiency" id="efficiency-grid">
-              <div class="eff-head dim">
-                <span>metric</span><span>value</span><span>14-day trend</span><span>7d</span><span>30d</span><span>status</span>
-              </div>
-              <!-- rows injected by app.js -->
-            </div>
-            <p class="small dim prompt-summary">
-              prompts:
-              <span class="green">475 approved</span> ·
-              <span class="cyan">678 new</span> ·
-              <span class="yellow">117 refined</span> ·
-              <span class="magenta">112 corrected</span>
-            </p>
-          </section>
-
-          <!-- CONTRIBUTIONS -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">C O N T R I B U T I O N S</h2>
-            <div class="contributions" id="contributions"></div>
-            <p class="small dim">
-              less <span class="heat-key" aria-hidden="true">
-                <span class="hk-0"></span><span class="hk-1"></span><span class="hk-2"></span><span class="hk-3"></span><span class="hk-4"></span>
-              </span> more &nbsp;
-              <span class="white">1197</span> sessions across <span class="white">21</span> days this year
-            </p>
-          </section>
-
-          <!-- YESTERDAY -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">Y E S T E R D A Y</h2>
-            <div class="row stat-row">
-              <span class="big">1</span><span class="dim">sessions</span>
-              <span class="big">2</span><span class="dim">tools</span>
-              <span class="big green">$3.16</span><span class="dim">est.</span>
-              <span class="dim small">[your-project]</span>
-            </div>
-            <p class="dim small">branches main</p>
-          </section>
-
-          <!-- FOCUS AREAS -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">F O C U S &nbsp; A R E A S</h2>
-            <div class="focus" id="focus-areas"></div>
-          </section>
-
-          <!-- SCOUT FINDINGS -->
-          <section class="block stage" data-reveal>
-            <h2 class="rule">S C O U T &nbsp; F I N D I N G S</h2>
-            <p class="small dim">6 queries · 2026-05-04 · full detail: <span class="white">scout-results.json</span></p>
-            <div class="scout" id="scout-findings"></div>
-          </section>
-
+          <div class="stream" id="stream"></div>
+          <div class="print-sentinel" id="print-sentinel" aria-hidden="true"></div>
+          <div class="caret-line">
+            <span class="cmd-cursor"></span>
+          </div>
         </div>
       </div>
 
