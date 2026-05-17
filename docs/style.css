@@ -274,10 +274,17 @@ body {
   white-space: pre;
   overflow-x: auto;
   min-height: 1.45em;       /* keep blank lines tall enough */
+  /* Hide the horizontal scrollbar that macOS reveals on scroll —
+     content still scrolls horizontally if a line overflows.       */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* legacy Edge */
   /* No transition — appears instantly when inserted. The "print"
      animation comes from the sequential insert + a brief fade. */
   opacity: 0;
   animation: dline-in 80ms ease forwards;
+}
+.dline::-webkit-scrollbar {     /* Chromium / Safari */
+  display: none;
 }
 @keyframes dline-in {
   from { opacity: 0; transform: translateY(2px); }
