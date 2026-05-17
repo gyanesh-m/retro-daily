@@ -99,12 +99,12 @@
       { name: 'Ctx hygiene',  value:  67, sev: 'warn' },
     ],
     efficiency: [
-      { name: 'Edit / Read',  value: '1.0',   bars: [4,2,1,3,2,3,2,5,4,8,4,8,4,1], d7: '↓', d30: '↓', status: 'good' },
-      { name: 'Auto-approve', value: '65.7%', bars: [7,6,1,7,3,6,6,4,6,8,7,8,8,2], d7: '↓', d30: '↓', status: 'bad'  },
-      { name: 'First-try',    value: '83.4%', bars: [7,8,8,7,7,8,8,8,7,7,8,7,8,1], d7: '↓', d30: '↓', status: 'good' },
+      { name: 'Edit / Read',  value: '1.0',   bars: [4,2,1,3,2,3,2,5,4,8,4,8,4,1], d7: '→', d30: '↑', status: 'good' },
+      { name: 'Auto-approve', value: '65.7%', bars: [7,6,1,7,3,6,6,4,6,8,7,8,8,2], d7: '↑', d30: '→', status: 'bad'  },
+      { name: 'First-try',    value: '83.4%', bars: [7,8,8,7,7,8,8,8,7,7,8,7,8,1], d7: '↑', d30: '↑', status: 'good' },
       { name: 'Corrections',  value: '15.1%', bars: [7,4,3,4,8,2,1,2,1,1,3,1,1,1], d7: '↓', d30: '↓', status: 'bad',  invertGood: true },
-      { name: 'Tool errors',  value: '10.2%', bars: [2,4,5,1,3,2,2,2,3,8,3,8,3,1], d7: '↓', d30: '↓', status: 'bad',  invertGood: true },
-      { name: 'Ctx hygiene',  value: '50.0%', bars: [1,1,1,1,1,1,1,1,1,2,2,2,8,8], d7: '↓', d30: '↓', status: 'warn' },
+      { name: 'Tool errors',  value: '10.2%', bars: [2,4,5,1,3,2,2,2,3,8,3,8,3,1], d7: '→', d30: '↓', status: 'bad',  invertGood: true },
+      { name: 'Ctx hygiene',  value: '50.0%', bars: [1,1,1,1,1,1,1,1,1,2,2,2,8,8], d7: '↑', d30: '→', status: 'warn' },
     ],
     prompts: { approved: 475, fresh: 678, refined: 117, corrected: 112 },
     yesterday: { sessions: 1, tools: 2, cost: '$3.16', project: 'your-project', branch: 'main' },
@@ -209,15 +209,21 @@
     out.push(head('E F F I C I E N C Y'));
     out.push(ruleC(RULE));
     out.push(`  ${dim('metric            value   14-day trend     7d   30d   status')}`);
+    // Color each arrow based on whether its direction is good for THIS metric.
+    // For invertGood metrics (lower is better), down=good. Otherwise up=good.
+    // Flat arrows render as dim — neither good nor bad.
+    const arrowColor = (m, arrow) => {
+      if (arrow === '→' || arrow === '·') return 'dim';
+      const up = arrow === '↑';
+      const good = m.invertGood ? !up : up;
+      return good ? 'green' : 'red';
+    };
     for (const m of META.efficiency) {
       const name  = pad(white(m.name), 18);
       const value = padL(white(bold(m.value)), 6);
       const sp    = cyan(spark(m.bars));
-      const arrowCls = m.invertGood
-        ? (m.status === 'good' ? 'red' : 'green')
-        : (m.status === 'good' ? 'green' : 'red');
-      const d7  = tag(arrowCls, m.d7);
-      const d30 = tag(arrowCls, m.d30);
+      const d7  = tag(arrowColor(m, m.d7),  m.d7);
+      const d30 = tag(arrowColor(m, m.d30), m.d30);
       const dot = sevDot(m.status);
       const lbl = tag(`sev-${m.status}`, m.status);
       out.push(`  ${name}${value}   ${sp}   ${d7}    ${d30}     ${dot} ${dim(lbl)}`);
