@@ -24,7 +24,7 @@ A daily dashboard for your Claude Code sessions. Renders at the top of every ses
 > The numbers below are sample data drawn from the author's own session history — your dashboard renders from your local `~/.claude/projects/*.jsonl`.
 
 ```
-C L A U D E  ·  D A I L Y                                 Mon May 04
+R E T R O  ·  D A I L Y                                   Mon May 04
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 A L L - T I M E

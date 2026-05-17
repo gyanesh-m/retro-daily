@@ -145,7 +145,7 @@
     const out = [];
 
     // --- Top header --------------------------------------------------------
-    const titleLeft = head('C L A U D E  ·  D A I L Y');
+    const titleLeft = head('R E T R O  ·  D A I L Y');
     const titleRight = dim(META.date);
     out.push(pad(titleLeft, RULE_W - vlen(titleRight)) + titleRight);
     out.push(ruleC(RULE));

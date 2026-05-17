@@ -999,7 +999,7 @@ def print_insights(store, yesterday_str):
 
     # ── Header: minimal editorial mark ─────────────────────────────────────────
     today_str = datetime.now().strftime('%a %b %d')
-    left = f"{BRIGHT_CYAN}{BOLD}{' '.join('CLAUDE')}{RESET}  {DIM}·{RESET}  {BRIGHT_CYAN}{' '.join('DAILY')}{RESET}"
+    left = f"{BRIGHT_CYAN}{BOLD}{' '.join('RETRO')}{RESET}  {DIM}·{RESET}  {BRIGHT_CYAN}{' '.join('DAILY')}{RESET}"
     right = f"{DIM}{today_str}{RESET}"
     left_w = _visible_len(left)
     right_w = _visible_len(right)
