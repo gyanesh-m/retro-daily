@@ -701,15 +701,34 @@ body {
   stroke: var(--cyan);
   stroke-width: 1.5;
   fill: none;
-  opacity: 0.45;
   stroke-dasharray: 300;
   stroke-dashoffset: 300;
-  animation: trunk-draw 7.5s ease-in-out infinite;
+  opacity: 0;
+  animation: trunk-draw 12s ease-in-out infinite;
 }
+/* Trunk is in lockstep with the step cascade:
+     1.5%   fades in at SessionStart (zero length, just origin)
+     17.5%  extends to step 2 (length 70)
+     34.5%  extends to step 3 (length 140)
+     51.5%  extends to step 4 (length 220)
+     67.5%  fully drawn at step 5 (length 300)
+     87.5%  holds at full
+     92%    fades out with the rest of the cascade
+     100%   dark until the loop restarts                                  */
 @keyframes trunk-draw {
-  0%, 100% { stroke-dashoffset: 300; opacity: 0.15; }
-  10%      { stroke-dashoffset: 0;   opacity: 0.45; }
-  85%      { stroke-dashoffset: 0;   opacity: 0.45; }
+  0%      { stroke-dashoffset: 300; opacity: 0; }
+  1.5%    { stroke-dashoffset: 300; opacity: 0.45; }
+  16%     { stroke-dashoffset: 300; opacity: 0.45; }
+  17.5%   { stroke-dashoffset: 230; opacity: 0.45; }
+  33%     { stroke-dashoffset: 230; opacity: 0.45; }
+  34.5%   { stroke-dashoffset: 160; opacity: 0.45; }
+  50%     { stroke-dashoffset: 160; opacity: 0.45; }
+  51.5%   { stroke-dashoffset: 80;  opacity: 0.45; }
+  66%     { stroke-dashoffset: 80;  opacity: 0.45; }
+  67.5%   { stroke-dashoffset: 0;   opacity: 0.45; }
+  87.5%   { stroke-dashoffset: 0;   opacity: 0.45; }
+  92%     { stroke-dashoffset: 0;   opacity: 0; }
+  100%    { stroke-dashoffset: 300; opacity: 0; }
 }
 
 .flow .node {
