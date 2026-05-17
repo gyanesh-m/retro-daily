@@ -453,6 +453,52 @@
     setTimeout(() => targets.forEach((el) => el.classList.add('in-view')), 1500);
   }
 
+  // ============================================================
+  // "Press any key to continue" easter egg
+  //
+  // Mimics the DOS prompt at the bottom of the page: pressing any key
+  // (or clicking/tapping the text) smooth-scrolls back up to the
+  // install section and briefly highlights the first codeblock so the
+  // reader's eye lands on the marketplace command.
+  // ============================================================
+
+  function setupEasterEgg() {
+    const trigger = document.getElementById('press-any-key');
+    const target  = document.getElementById('install');
+    if (!trigger || !target) return;
+
+    // Only trigger once per page load — repeated firings get annoying.
+    let fired = false;
+
+    const flash = () => {
+      if (fired) return;
+      fired = true;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Wait for scroll to settle, then highlight the first codeblock.
+      window.setTimeout(() => {
+        const block = target.querySelector('.codeblock');
+        if (!block) return;
+        block.classList.add('flash');
+        window.setTimeout(() => block.classList.remove('flash'), 1800);
+      }, 700);
+    };
+
+    // Any keypress fires it — except modifier-only presses and typing
+    // into a (currently non-existent) form input.
+    window.addEventListener('keydown', (ev) => {
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      if (ev.target && /^(input|textarea|select)$/i.test(ev.target.tagName)) return;
+      flash();
+    });
+
+    // Direct click/tap on the prompt too — mouse users get the payoff.
+    trigger.addEventListener('click', flash);
+    trigger.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); flash(); }
+    });
+  }
+
   setupPageReveal();
+  setupEasterEgg();
   run();
 })();
