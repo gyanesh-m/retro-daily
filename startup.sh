@@ -4,6 +4,31 @@
 # output + timing mirrored to /tmp/claude-startup.log for debugging what
 # Claude Code's hook pipeline actually receives.
 # NOTE: no `set -e` — we want every step to execute even if an earlier one errors.
+#
+# ─── How SessionStart hook output reaches the user vs. the LLM ───────────────
+#
+# Per Claude Code's hook spec (https://code.claude.com/docs/en/hooks):
+#
+#     SessionStart hook fires
+#               │
+#       ┌───────┴────────┐
+#       ▼                ▼
+#   Plain stdout    JSON output
+#       │                │
+#       ▼        ┌───────┴───────┐
+#   Claude's     ▼               ▼
+#   context  systemMessage   additionalContext
+#   ONLY     (VISIBLE to     (Claude's context
+#  (hidden    user in        only — invisible)
+#   from      terminal)
+#   user)
+#
+# In Claude Code v2.1.x's full-screen TUI, plain stdout from a plugin's
+# SessionStart hook is captured into the LLM's `additionalContext` and is NOT
+# rendered visibly. To make the dashboard appear at the top of the user's
+# session, we MUST emit a JSON document with `systemMessage` set to the
+# rendered output. We also include `hookSpecificOutput.additionalContext` so
+# the model still gets the same view of the dashboard.
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
@@ -14,6 +39,11 @@ DEBUG_LOG="/tmp/claude-startup.log"
   echo "CLAUDE_CODE_SESSION=${CLAUDE_CODE_SESSION:-unset}"
   echo "PATH=$PATH"
 } >> "$DEBUG_LOG" 2>&1
+
+# Accumulate every step's stdout into a single buffer. At the end we emit
+# the entire concatenated output as one JSON document so it lands in
+# systemMessage (user-visible) AND additionalContext (LLM-visible).
+ACCUMULATED=""
 
 run_step() {
   local name="$1"; shift
@@ -27,13 +57,8 @@ run_step() {
     printf '%s\n' "$out"
     echo "----- end [$name] stdout -----"
   } >> "$DEBUG_LOG"
-  # Emit to real stdout so Claude Code's hook feeds it into the LLM context.
-  printf '%s\n' "$out"
-  # ALSO emit to /dev/tty so the user actually sees it in their terminal even
-  # when Claude Code's CLI swallows the hook's stdout visually.
-  if [ -w /dev/tty ]; then
-    printf '%s\n' "$out" > /dev/tty 2>/dev/null || true
-  fi
+  # Append to the buffer that will end up in systemMessage + additionalContext.
+  ACCUMULATED="${ACCUMULATED}${out}"$'\n'
 }
 
 # Order matters: dashboard first (scrolls to top of terminal), scout findings
@@ -43,5 +68,19 @@ run_step "daily-insights" bash "$RETRO_DAILY_HOME/daily-insights.sh" || true
 run_step "scout"          bash "$RETRO_DAILY_HOME/scout.sh"          || true
 run_step "tag-sessions"   bash "$RETRO_DAILY_HOME/tag-sessions.sh"   || true
 run_step "scout-review"   bash "$RETRO_DAILY_HOME/scout-review.sh"   || true
+
+# Emit the SessionStart hook JSON response. Reads ACCUMULATED from stdin so we
+# don't have to worry about shell quoting of multi-line ANSI-colored content.
+printf '%s' "$ACCUMULATED" | python3 -c '
+import json, sys
+content = sys.stdin.read().rstrip("\n")
+print(json.dumps({
+    "systemMessage": content,
+    "hookSpecificOutput": {
+        "hookEventName": "SessionStart",
+        "additionalContext": content,
+    },
+}))
+' 2>>"$DEBUG_LOG"
 
 echo "===== startup.sh finished at $(date -u +%Y-%m-%dT%H:%M:%SZ) =====" >> "$DEBUG_LOG"
