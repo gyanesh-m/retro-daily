@@ -60,17 +60,24 @@ if [ ! -x "$RUNNER" ]; then
   exit 0
 fi
 
-QUERIES=$(python3 -c "
-import json
-d = json.load(open('$QUERIES_FILE'))
-print(' · '.join(d.get('queries', [])))
-" 2>/dev/null || echo "")
-
 # Spawn fully-detached background worker. macOS lacks `setsid`; the runner itself
 # traps SIGHUP to survive the parent Claude Code session closing (previous attempts
 # died with exit 129 when sessions ended).
 nohup bash "$RUNNER" </dev/null >> "$LOG" 2>&1 &
 disown
 
-echo "[scout] queued · $QUERIES"
-echo "[scout] results will appear in next session (log: $LOG)"
+# Print queries one-per-line + shortened log path so nothing wraps in narrow
+# viewports. Joining all queries on a single ` · `-separated line and printing
+# the absolute /Users/... log path both blew past 80 chars and wrapped ugly.
+SHORT_LOG="${LOG/#$HOME/\~}"
+python3 - "$QUERIES_FILE" "$SHORT_LOG" <<'PY_EOF'
+import json, sys
+queries_file, short_log = sys.argv[1], sys.argv[2]
+try:
+    queries = json.load(open(queries_file)).get('queries', [])
+except Exception:
+    queries = []
+print(f"[scout] queued — {len(queries)} queries, results in next session · log: {short_log}")
+for q in queries:
+    print(f"  · {q}")
+PY_EOF

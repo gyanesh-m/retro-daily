@@ -48,5 +48,5 @@ fi
 nohup bash "$RUNNER" </dev/null >> "$LOG" 2>&1 &
 disown
 
-echo "[tag-sessions] queued · last run was $DAYS_SINCE days ago"
-echo "[tag-sessions] results will appear in next session (log: $LOG)"
+SHORT_LOG="${LOG/#$HOME/\~}"
+echo "[tag-sessions] queued (last run $DAYS_SINCE days ago), results next session · log: $SHORT_LOG"

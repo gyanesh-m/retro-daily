@@ -995,7 +995,9 @@ def print_insights(store, yesterday_str):
     active_day_key = yesterday_str if yesterday_str in daily else (sorted_days[0] if sorted_days else None)
     active = daily.get(active_day_key) if active_day_key else None
 
-    out = []
+    # Leading blank line so the dashboard separates visually from whatever
+    # Claude Code's UI prints above it (welcome banner, prior hook output, etc.).
+    out = [""]
 
     # ── Header: minimal editorial mark ─────────────────────────────────────────
     today_str = datetime.now().strftime('%a %b %d')
