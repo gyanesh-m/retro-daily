@@ -272,19 +272,16 @@ body {
 }
 .dline {
   white-space: pre;
-  overflow-x: auto;
+  /* Heavy box-drawing chars (━) render ~2x normal mono cell width
+     in JetBrains Mono, so 68-char rule lines overflow the 870px
+     container. Clip rather than scroll: every ━ looks the same so
+     truncation is invisible, and there's no scrollbar to reveal. */
+  overflow-x: hidden;
   min-height: 1.45em;       /* keep blank lines tall enough */
-  /* Hide the horizontal scrollbar that macOS reveals on scroll —
-     content still scrolls horizontally if a line overflows.       */
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* legacy Edge */
   /* No transition — appears instantly when inserted. The "print"
      animation comes from the sequential insert + a brief fade. */
   opacity: 0;
   animation: dline-in 80ms ease forwards;
-}
-.dline::-webkit-scrollbar {     /* Chromium / Safari */
-  display: none;
 }
 @keyframes dline-in {
   from { opacity: 0; transform: translateY(2px); }
