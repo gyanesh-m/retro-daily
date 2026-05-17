@@ -17,11 +17,20 @@
        a daily retro for your claude code sessions
 ```
 
-A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, contributions heatmap, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/code) [![Live demo](https://img.shields.io/badge/live%20demo-→-2a6e69)](https://gyanesh-m.github.io/retro-daily/) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gyanesh-m/retro-daily/pulls)
 
 ![retro-daily dashboard at the top of a Claude Code session](docs/screenshots/terminal-top.png)
 
 **[Live demo →](https://gyanesh-m.github.io/retro-daily/)** &nbsp;·&nbsp; animated CRT terminal that streams the dashboard line-by-line as you scroll.
+
+Renders at the top of every Claude Code session via a `SessionStart` hook:
+
+- **All-time + last-7-days totals** — sessions, tools, days, cost (API-equivalent)
+- **Competency grade** — 0–100 composite score plus an A–F letter, with per-metric breakdown
+- **14-day efficiency sparklines** for Edit/Read, auto-approve, first-try, corrections, tool errors, context hygiene
+- **Year-long contributions heatmap** — the green-grid you know from GitHub, sourced from your session history
+- **Focus areas** — concrete, actionable recommendations for your weakest metrics
+- **Scout findings** — a background worker that searches docs.anthropic.com and GitHub for ideas tied to those weak metrics
 
 ## Sample output
 
