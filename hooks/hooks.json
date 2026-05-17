@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env CLAUDE_DAILY_HOME=\"${CLAUDE_PLUGIN_ROOT}\" CLAUDE_DAILY_DATA=\"${CLAUDE_PLUGIN_DATA}\" bash \"${CLAUDE_PLUGIN_ROOT}/startup.sh\"",
+            "timeout": 40,
+            "statusMessage": "Loading session analytics..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "claude-daily",
+  "version": "0.1.0",
+  "description": "Retro daily analytics dashboard for Claude Code sessions, rendered via SessionStart hook.",
+  "homepage": "https://github.com/gyanesh-m/claude-daily",
+  "license": "MIT"
+}

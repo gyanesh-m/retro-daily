@@ -1,0 +1,1108 @@
+/* ============================================================
+   claude-daily landing page — CRT terminal aesthetic
+   Page tells a story: prompt → user types `claude` → Claude
+   welcome screen → claude-daily SessionStart hook output.
+   ============================================================ */
+
+:root {
+  --bg:           #0a0d10;
+  --bg-soft:      #11161b;
+  --bg-tty:       #0d1117;
+  --bg-titlebar:  #1a1f25;
+  --rule:         #1c2530;
+  --rule-soft:    #161b22;
+  --white:        #f5f7fa;
+  --dim:          #5b6675;
+  --dim-2:        #7a8493;
+  --cyan:         #38d4ff;
+  --cyan-bright:  #7be8ff;
+  --green:        #4ade80;
+  --green-dim:    #16a34a;
+  --yellow:       #facc15;
+  --orange:       #fb923c;
+  --red:          #f87171;
+  --magenta:      #c084fc;
+  --grid-1:       #1a2330;
+  --grid-2:       #1f3a4d;
+  --grid-3:       #2a6e69;
+  --grid-4:       #3aaa5b;
+  --grid-5:       #4ade80;
+  --glow:         0 0 6px rgba(56, 212, 255, 0.35);
+  --glow-soft:    0 0 4px rgba(245, 247, 250, 0.15);
+  --shadow-window: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 1px rgba(56, 212, 255, 0.3);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", ui-monospace, monospace;
+  font-size: 14.5px;
+  line-height: 1.55;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at center, rgba(20, 32, 48, 0.4) 0%, var(--bg) 70%);
+  background-attachment: fixed;
+}
+
+/* CRT overlays */
+.crt {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025) 0,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+.vignette {
+  background: radial-gradient(ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, 0.55) 100%);
+}
+.flicker {
+  background: rgba(255, 255, 255, 0.012);
+  animation: flicker 0.18s steps(1) infinite alternate;
+}
+@keyframes flicker {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 0.5; }
+}
+
+/* ============================================================
+   Page layout
+   ============================================================ */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 56px 20px 96px;
+  position: relative;
+  z-index: 10;
+}
+
+/* ============================================================
+   Terminal window chrome
+   ============================================================ */
+
+.terminal {
+  border-radius: 8px;
+  background: var(--bg-tty);
+  box-shadow: var(--shadow-window);
+  border: 1px solid rgba(56, 212, 255, 0.08);
+  overflow: hidden;
+  margin-bottom: 64px;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+.tl-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.tl-red    { background: #ff5f56; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2); }
+.tl-yellow { background: #ffbd2e; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2); }
+.tl-green  { background: #27c93f; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2); }
+.tl-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11.5px;
+  color: var(--dim-2);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.tty {
+  padding: 20px 24px 28px;
+  font-size: 13.5px;
+  min-height: 320px;
+}
+
+/* ============================================================
+   PS1 prompt + typed command  (no hostname; arrow + dir + git)
+   ============================================================ */
+
+.line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.prompt-line { margin: 0 0 14px; font-size: 13.5px; }
+
+.ps1-arrow   { display: inline-flex; gap: 1px; margin-right: 4px; font-weight: 700; }
+.ps1-arrow .a1 { color: var(--green); }
+.ps1-arrow .a2 { color: var(--cyan-bright); }
+
+.ps1-path    { color: var(--white); font-weight: 700; }
+.ps1-git     { color: var(--cyan-bright); }
+.ps1-branch  { color: var(--red); }
+.ps1-mark    { color: var(--yellow); font-weight: 700; margin: 0 4px 0 2px; }
+
+.typed       { color: var(--white); }
+.cmd-cursor {
+  display: inline-block;
+  width: 9px;
+  height: 1.05em;
+  background: var(--cyan-bright);
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  box-shadow: var(--glow);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ============================================================
+   Sequenced reveal: each `.stage` element starts hidden;
+   JS adds `.ready` to fade it in in the correct order.
+   ============================================================ */
+
+.stage {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.stage.ready {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   Welcome screen (Claude Code actual layout — no box)
+   ============================================================ */
+
+.welcome {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 6px 0 16px;
+}
+.welcome-sprite {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+.welcome-sprite svg {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: 64px;
+  height: 48px;
+  filter: drop-shadow(0 0 6px rgba(232, 130, 106, 0.4));
+}
+.welcome-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.45;
+}
+.wl-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+}
+.wl-title .bold { font-weight: 700; }
+.wl-title .dim  { font-size: 12.5px; }
+.wl-model { font-size: 12.5px; }
+.wl-cwd   { font-size: 12.5px; }
+.bold     { font-weight: 700; }
+
+/* ============================================================
+   Input line (Claude Code's prompt after the welcome banner)
+   ============================================================ */
+
+.input-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 14px 0 4px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.012);
+}
+.input-arrow {
+  color: var(--cyan-bright);
+  font-weight: 700;
+  text-shadow: var(--glow);
+}
+.input-placeholder {
+  color: var(--dim);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.divider {
+  height: 18px;
+}
+
+/* ============================================================
+   SessionStart hook output region — pure ASCII teletype
+   ============================================================ */
+
+.hook-output {
+  padding-top: 6px;
+}
+
+.stream {
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dline {
+  white-space: pre;
+  overflow-x: auto;
+  min-height: 1.45em;       /* keep blank lines tall enough */
+  /* No transition — appears instantly when inserted. The "print"
+     animation comes from the sequential insert + a brief fade. */
+  opacity: 0;
+  animation: dline-in 80ms ease forwards;
+}
+@keyframes dline-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Color classes used inline inside each `.dline` */
+.dline .cyan      { color: var(--cyan-bright); text-shadow: var(--glow); }
+.dline .cyan-dim  { color: var(--cyan); opacity: 0.85; }
+.dline .white     { color: var(--white); }
+.dline .dim       { color: var(--dim); }
+.dline .green     { color: var(--green); }
+.dline .yellow    { color: var(--yellow); }
+.dline .red       { color: var(--red); }
+.dline .magenta   { color: var(--magenta); }
+.dline .bold      { font-weight: 700; }
+.dline .head      { color: var(--cyan-bright); font-weight: 700; text-shadow: var(--glow); letter-spacing: 0.04em; }
+.dline .rule      { color: var(--cyan); }
+
+/* Heatmap cell colors (4 levels + zero) */
+.dline .h0 { color: #1a2330; }
+.dline .h1 { color: #1f3a4d; }
+.dline .h2 { color: #2a6e69; }
+.dline .h3 { color: #3aaa5b; }
+.dline .h4 { color: var(--green); text-shadow: 0 0 4px rgba(74, 222, 128, 0.5); }
+
+/* Severity dots inline */
+.dline .sev-good { color: var(--green);  text-shadow: 0 0 4px rgba(74, 222, 128, 0.55); }
+.dline .sev-warn { color: var(--yellow); text-shadow: 0 0 4px rgba(250, 204, 21, 0.55); }
+.dline .sev-bad  { color: var(--red);    text-shadow: 0 0 4px rgba(248, 113, 113, 0.55); }
+
+/* Filled gauge segments (█) glow */
+.dline .gauge-fill   { color: var(--yellow); }
+.dline .gauge-empty  { color: var(--dim); opacity: 0.6; }
+.dline .gauge-bad    { color: var(--red); }
+.dline .gauge-warn   { color: var(--yellow); }
+
+/* Sentinel that anchors the bottom of the printed area */
+.print-sentinel {
+  height: 1px;
+  width: 100%;
+}
+
+/* Caret blinking at the very end (only visible once everything printed) */
+.caret-line {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================
+   Section blocks
+   ============================================================ */
+
+.block { margin-bottom: 36px; }
+.block:last-child { margin-bottom: 8px; }
+
+.rule {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cyan-bright);
+  text-shadow: var(--glow);
+  letter-spacing: 0.18em;
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cyan);
+}
+
+.row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+
+.stat-row .big {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  text-shadow: var(--glow-soft);
+}
+.stat-row .big.green {
+  color: var(--green);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+}
+.dim { color: var(--dim); }
+.small { font-size: 12.5px; }
+.white { color: var(--white); }
+.cyan { color: var(--cyan-bright); }
+.green { color: var(--green); }
+.yellow { color: var(--yellow); }
+.red { color: var(--red); }
+.magenta { color: var(--magenta); }
+
+.token-line span { margin-right: 4px; }
+
+/* ============================================================
+   Last-7-days week bars
+   ============================================================ */
+
+.weekbars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  max-width: 360px;
+}
+.weekbars .bar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.weekbars .bar .label { font-size: 11px; color: var(--dim); }
+.weekbars .bar .cell {
+  width: 100%;
+  height: 18px;
+  background: var(--grid-1);
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+}
+.weekbars .bar .cell::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+}
+.weekbars .bar .count { font-size: 12px; color: var(--white); font-weight: 700; }
+.weekbars .bar.count-0 .count { color: var(--dim); }
+.weekbars .bar .cell.lvl-1 { background: var(--grid-2); }
+.weekbars .bar .cell.lvl-2 { background: var(--grid-3); }
+.weekbars .bar .cell.lvl-3 { background: var(--grid-4); }
+.weekbars .bar .cell.lvl-4 { background: var(--grid-5); }
+
+/* ============================================================
+   Competency gauge
+   ============================================================ */
+
+.competency { margin: 14px 0; }
+.gauge-wide { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.gauge-track {
+  flex: 1 1 360px;
+  height: 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  min-width: 260px;
+}
+.gauge-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--orange) 0%, var(--yellow) 100%);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+  transition: width 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.gauge-wide.in-view .gauge-fill { width: var(--target); }
+.gauge-label { display: flex; align-items: baseline; gap: 4px; }
+.gauge-label .big { font-size: 22px; font-weight: 700; }
+.grade { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; }
+.grade.yellow { text-shadow: 0 0 8px rgba(250, 204, 21, 0.4); }
+
+.breakdown { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+
+/* ============================================================
+   Efficiency grid
+   ============================================================ */
+
+.efficiency {
+  display: grid;
+  grid-template-columns: 1.3fr 0.5fr 1.6fr 0.4fr 0.4fr 0.7fr;
+  gap: 8px 14px;
+  align-items: center;
+  font-size: 13px;
+  margin: 14px 0 8px;
+}
+.eff-head { display: contents; }
+.eff-head span { font-size: 11.5px; letter-spacing: 0.04em; }
+.eff-row { display: contents; }
+.eff-name { color: var(--white); }
+.eff-value { color: var(--white); font-weight: 700; font-variant-numeric: tabular-nums; }
+.eff-arrow { font-size: 13px; }
+.eff-status { display: flex; align-items: center; gap: 6px; }
+.eff-status .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 4px currentColor;
+}
+.eff-status .dot.good { background: var(--green); color: var(--green); }
+.eff-status .dot.warn { background: var(--yellow); color: var(--yellow); }
+.eff-status .dot.bad  { background: var(--red);    color: var(--red); }
+.eff-status .lbl { font-size: 12px; }
+.eff-status .lbl.good { color: var(--green); }
+.eff-status .lbl.warn { color: var(--yellow); }
+.eff-status .lbl.bad  { color: var(--red); }
+
+.sparkline {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+  min-width: 120px;
+}
+.sparkline .b {
+  width: 6px;
+  background: linear-gradient(180deg, var(--cyan-bright) 0%, var(--cyan) 100%);
+  border-radius: 1px;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+  opacity: 0.85;
+}
+.sparkline.in-view .b { transform: scaleY(1); }
+.sparkline .b:nth-child(1)  { transition-delay: 0.02s; }
+.sparkline .b:nth-child(2)  { transition-delay: 0.05s; }
+.sparkline .b:nth-child(3)  { transition-delay: 0.08s; }
+.sparkline .b:nth-child(4)  { transition-delay: 0.11s; }
+.sparkline .b:nth-child(5)  { transition-delay: 0.14s; }
+.sparkline .b:nth-child(6)  { transition-delay: 0.17s; }
+.sparkline .b:nth-child(7)  { transition-delay: 0.20s; }
+.sparkline .b:nth-child(8)  { transition-delay: 0.23s; }
+.sparkline .b:nth-child(9)  { transition-delay: 0.26s; }
+.sparkline .b:nth-child(10) { transition-delay: 0.29s; }
+.sparkline .b:nth-child(11) { transition-delay: 0.32s; }
+.sparkline .b:nth-child(12) { transition-delay: 0.35s; }
+.sparkline .b:nth-child(13) { transition-delay: 0.38s; }
+.sparkline .b:nth-child(14) { transition-delay: 0.41s; }
+
+.prompt-summary { margin-top: 14px; }
+
+/* ============================================================
+   Contributions heatmap
+   ============================================================ */
+
+.contributions {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 3px;
+  margin: 12px 0;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.contributions .cell {
+  width: 12px; height: 12px;
+  border-radius: 2px;
+  background: var(--grid-1);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.contributions.in-view .cell { opacity: 1; }
+.contributions .cell.lvl-1 { background: var(--grid-2); }
+.contributions .cell.lvl-2 { background: var(--grid-3); }
+.contributions .cell.lvl-3 { background: var(--grid-4); }
+.contributions .cell.lvl-4 { background: var(--grid-5); box-shadow: 0 0 4px rgba(74, 222, 128, 0.5); }
+
+.heat-key { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 4px; }
+.heat-key span { width: 10px; height: 10px; display: inline-block; border-radius: 2px; }
+.hk-0 { background: var(--grid-1); }
+.hk-1 { background: var(--grid-2); }
+.hk-2 { background: var(--grid-3); }
+.hk-3 { background: var(--grid-4); }
+.hk-4 { background: var(--grid-5); }
+
+/* ============================================================
+   Focus areas
+   ============================================================ */
+
+.focus { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+.focus-row {
+  display: grid;
+  grid-template-columns: 22px 56px 140px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.focus-row .sev-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.focus-row .sev-tag { font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em; }
+.focus-row.bad  .sev-dot { background: var(--red);    box-shadow: 0 0 5px var(--red); }
+.focus-row.bad  .sev-tag { color: var(--red); }
+.focus-row.warn .sev-dot { background: var(--yellow); box-shadow: 0 0 5px var(--yellow); }
+.focus-row.warn .sev-tag { color: var(--yellow); }
+.focus-row .name { color: var(--white); }
+.focus-row .fgauge {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.focus-row .fgauge .fill { height: 100%; width: 0; transition: width 1s cubic-bezier(0.65, 0, 0.35, 1); }
+.focus-row.bad  .fgauge .fill { background: var(--red);    box-shadow: 0 0 6px rgba(248, 113, 113, 0.45); }
+.focus-row.warn .fgauge .fill { background: var(--yellow); box-shadow: 0 0 6px rgba(250, 204, 21, 0.45); }
+.focus-row.in-view .fgauge .fill { width: var(--target); }
+.focus-row .val { color: var(--white); font-weight: 700; }
+.focus-row .range { color: var(--dim); font-size: 12px; }
+.focus-row .rec {
+  grid-column: 4 / -1;
+  color: var(--dim);
+  font-size: 12.5px;
+  padding-left: 4px;
+}
+.focus-row .rec::before { content: "→ "; color: var(--green); }
+
+/* ============================================================
+   Scout findings
+   ============================================================ */
+
+.scout { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+.scout-item {
+  border-left: 2px solid var(--yellow);
+  padding-left: 14px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.scout.in-view .scout-item { opacity: 1; transform: translateX(0); }
+.scout-item .q { color: var(--white); font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+.scout-item .q::before { content: "● "; color: var(--yellow); text-shadow: 0 0 5px var(--yellow); }
+.scout-item .actionable { color: var(--dim); font-size: 12.5px; margin-bottom: 4px; }
+.scout-item .actionable::before { content: "→ "; color: var(--green); }
+.scout-item .repo { color: var(--dim); font-size: 12px; }
+.scout-item .repo::before { content: "★ "; color: var(--yellow); }
+.scout-item .repo .name { color: var(--white); }
+.scout.in-view .scout-item:nth-child(1) { transition-delay: 0.05s; }
+.scout.in-view .scout-item:nth-child(2) { transition-delay: 0.15s; }
+.scout.in-view .scout-item:nth-child(3) { transition-delay: 0.25s; }
+.scout.in-view .scout-item:nth-child(4) { transition-delay: 0.35s; }
+.scout.in-view .scout-item:nth-child(5) { transition-delay: 0.45s; }
+.scout.in-view .scout-item:nth-child(6) { transition-delay: 0.55s; }
+
+/* ============================================================
+   Status bar (pinned to bottom of terminal window)
+   ============================================================ */
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-titlebar);
+  border-top: 1px solid var(--rule);
+  font-size: 11.5px;
+  color: var(--dim-2);
+}
+.sb-left, .sb-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sb-sep { color: var(--dim); opacity: 0.6; }
+.sb-model  { color: var(--magenta); }
+.sb-path   { color: var(--cyan-bright); }
+.sb-branch { color: var(--green); }
+.sb-time   { color: var(--dim); }
+.sb-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
+  display: inline-block;
+}
+.sb-effort { color: var(--dim-2); }
+
+/* Trailing cursor at the bottom of the terminal */
+
+/* ============================================================
+   Page-level content (outside the terminal frame)
+   ============================================================ */
+
+.page-section {
+  margin: 56px 0;
+}
+.page-h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cyan-bright);
+  text-shadow: var(--glow);
+  letter-spacing: 0.18em;
+  margin: 0 0 16px;
+  text-transform: uppercase;
+}
+.lede { font-size: 14px; line-height: 1.7; max-width: 64ch; }
+.lede code { background: var(--bg-soft); color: var(--cyan-bright); padding: 1px 5px; border-radius: 2px; font-size: 12.5px; }
+
+/* ============================================================
+   "How it works" — inline SVG flow diagram (no JS)
+
+   A vertical timeline with a pulse traveling down the trunk.
+   Each step's node, label and (where applicable) branch +
+   output filename fade in in sequence. Total loop = 7.5s.
+   ============================================================ */
+
+.flow-figure {
+  margin: 18px 0 12px;
+  max-width: 720px;
+}
+.flow-figure figcaption {
+  margin-top: 8px;
+  max-width: 72ch;
+  font-size: 12.5px;
+}
+.flow-figure figcaption code {
+  background: var(--bg-soft);
+  color: var(--cyan-bright);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.flow {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px;
+  /* Give SVG its own font-family so the JetBrains Mono used elsewhere
+     doesn't override — sans-serif reads better in compact label text. */
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ---- Visual primitives ---- */
+
+.flow .trunk {
+  stroke: var(--cyan);
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.45;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: trunk-draw 7.5s ease-in-out infinite;
+}
+@keyframes trunk-draw {
+  0%, 100% { stroke-dashoffset: 300; opacity: 0.15; }
+  10%      { stroke-dashoffset: 0;   opacity: 0.45; }
+  85%      { stroke-dashoffset: 0;   opacity: 0.45; }
+}
+
+.flow .node {
+  fill: var(--cyan-bright);
+  filter: drop-shadow(0 0 6px rgba(56, 212, 255, 0.55));
+  opacity: 0;
+}
+
+.flow .branch {
+  stroke: var(--cyan);
+  stroke-width: 1.3;
+  stroke-dasharray: 4 4;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+
+.flow .file {
+  fill: rgba(56, 212, 255, 0.08);
+  stroke: var(--cyan);
+  stroke-width: 1;
+  opacity: 0;
+}
+
+.flow text {
+  font-size: 13px;
+  fill: var(--white);
+  opacity: 0;
+}
+.flow text.lbl  { font-weight: 700; }
+.flow text.sub  { font-size: 11px; fill: var(--dim-2); }
+.flow .dim2     { fill: var(--dim); font-weight: 400; font-size: 11.5px; }
+.flow .file-label {
+  font-size: 12px;
+  fill: var(--cyan-bright);
+  font-weight: 600;
+}
+
+/* ---- Accumulating cascade ----
+   Single 12s loop. Each step gets 2s in the spotlight at full opacity.
+   When the next step fires the previous step dims to 0.35 but stays
+   visible — by the end of the loop, all 5 steps are on screen (most
+   recent at full, earlier ones dimmed) and the eye can read the whole
+   architecture at once. Then everything fades out and the loop restarts.
+
+   Timeline (within the 12s loop):
+     0.0s – 2.0s   step 1 active  (full)
+     2.0s – 4.0s   step 2 active  (step 1 dims)
+     4.0s – 6.0s   step 3 active  (steps 1,2 dim)
+     6.0s – 8.0s   step 4 active  (steps 1,2,3 dim)
+     8.0s – 10.0s  step 5 active  (steps 1-4 dim)
+     10.5s – 11.5s everything fades to 0
+     11.5s – 12.0s dark before restart
+*/
+
+.flow .pulse {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 8px var(--cyan-bright));
+}
+.flow .pulse-g {
+  animation: pulse-travel 12s linear infinite;
+}
+/* Pulse sits at the active step for ~1.8s, then jumps invisibly to the
+   next. Node y-positions: step1=40, step2=110, step3=180, step4=260,
+   step5=340. Translations from base y=40 are 0, 70, 140, 220, 300. */
+@keyframes pulse-travel {
+  0%, 100%  { transform: translateY(0);    opacity: 0; }
+  1%        { transform: translateY(0);    opacity: 1; }
+  16%       { transform: translateY(0);    opacity: 1; }
+  16.5%     { transform: translateY(0);    opacity: 0; }
+  17%       { transform: translateY(70px); opacity: 0; }
+  17.5%     { transform: translateY(70px); opacity: 1; }
+  33%       { transform: translateY(70px); opacity: 1; }
+  33.5%     { transform: translateY(70px); opacity: 0; }
+  34%       { transform: translateY(140px); opacity: 0; }
+  34.5%     { transform: translateY(140px); opacity: 1; }
+  50%       { transform: translateY(140px); opacity: 1; }
+  50.5%     { transform: translateY(140px); opacity: 0; }
+  51%       { transform: translateY(220px); opacity: 0; }
+  51.5%     { transform: translateY(220px); opacity: 1; }
+  66%       { transform: translateY(220px); opacity: 1; }
+  66.5%     { transform: translateY(220px); opacity: 0; }
+  67%       { transform: translateY(300px); opacity: 0; }
+  67.5%     { transform: translateY(300px); opacity: 1; }
+  87.5%     { transform: translateY(300px); opacity: 1; }
+  92%       { transform: translateY(300px); opacity: 0; }
+}
+
+/* ---- Per-step accumulate-then-dim keyframes ----
+   Each step fires at its own time, holds at full opacity for 2s, then
+   dims to 0.35 (still visible) and stays dim until the loop's
+   end-of-cycle fade-out at 87.5%–92%. Branches and file boxes track
+   their step's opacity but draw stroke-dashoffset → 0 on entry.       */
+
+/* Step 1 — SessionStart hook fires */
+.flow .n1, .flow .s1 {
+  animation: acc-1 12s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes acc-1 {
+  0%        { opacity: 0; }
+  1.5%      { opacity: 1; }
+  16%       { opacity: 1; }
+  18%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+
+/* Step 2 — daily-insights */
+.flow .n2,
+.flow .lbl.s2,
+.flow .sub.s2 {
+  animation: acc-2 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .file.s2,
+.flow .file-label.s2 {
+  animation: acc-2-late 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s2 {
+  animation: acc-2-branch 12s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes acc-2 {
+  0%, 16%   { opacity: 0; }
+  18%       { opacity: 1; }
+  33%       { opacity: 1; }
+  35%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes acc-2-branch {
+  0%, 20%   { opacity: 0; stroke-dashoffset: 360; }
+  22%       { opacity: 1; stroke-dashoffset: 360; }
+  28%       { opacity: 1; stroke-dashoffset: 0; }
+  33%       { opacity: 1; stroke-dashoffset: 0; }
+  35%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes acc-2-late {
+  0%, 25%   { opacity: 0; }
+  29%       { opacity: 1; }
+  33%       { opacity: 1; }
+  35%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+
+/* Step 3 — scout */
+.flow .n3,
+.flow .lbl.s3,
+.flow .sub.s3 {
+  animation: acc-3 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .file.s3,
+.flow .file-label.s3 {
+  animation: acc-3-late 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s3 {
+  animation: acc-3-branch 12s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes acc-3 {
+  0%, 33%   { opacity: 0; }
+  35%       { opacity: 1; }
+  50%       { opacity: 1; }
+  52%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes acc-3-branch {
+  0%, 37%   { opacity: 0; stroke-dashoffset: 360; }
+  39%       { opacity: 1; stroke-dashoffset: 360; }
+  45%       { opacity: 1; stroke-dashoffset: 0; }
+  50%       { opacity: 1; stroke-dashoffset: 0; }
+  52%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes acc-3-late {
+  0%, 42%   { opacity: 0; }
+  46%       { opacity: 1; }
+  50%       { opacity: 1; }
+  52%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+
+/* Step 4 — tag-sessions */
+.flow .n4,
+.flow .lbl.s4,
+.flow .sub.s4 {
+  animation: acc-4 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .file.s4,
+.flow .file-label.s4 {
+  animation: acc-4-late 12s ease-in-out infinite;
+  opacity: 0;
+}
+.flow .branch.s4 {
+  animation: acc-4-branch 12s ease-in-out infinite;
+  opacity: 0;
+  stroke-dashoffset: 360;
+}
+@keyframes acc-4 {
+  0%, 50%   { opacity: 0; }
+  52%       { opacity: 1; }
+  66%       { opacity: 1; }
+  68%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+@keyframes acc-4-branch {
+  0%, 54%   { opacity: 0; stroke-dashoffset: 360; }
+  56%       { opacity: 1; stroke-dashoffset: 360; }
+  62%       { opacity: 1; stroke-dashoffset: 0; }
+  66%       { opacity: 1; stroke-dashoffset: 0; }
+  68%       { opacity: 0.35; stroke-dashoffset: 0; }
+  87.5%     { opacity: 0.35; stroke-dashoffset: 0; }
+  92%       { opacity: 0; stroke-dashoffset: 0; }
+  100%      { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes acc-4-late {
+  0%, 58%   { opacity: 0; }
+  62%       { opacity: 1; }
+  66%       { opacity: 1; }
+  68%       { opacity: 0.35; }
+  87.5%     { opacity: 0.35; }
+  92%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+
+/* Step 5 — dashboard renders (finale, holds at full until the clear) */
+.flow .n5, .flow .s5 {
+  animation: acc-5 12s ease-in-out infinite;
+  opacity: 0;
+  transform-origin: 80px 340px;
+}
+@keyframes acc-5 {
+  0%, 66%   { opacity: 0; transform: scale(0.9); }
+  68%       { opacity: 1; transform: scale(1.15); }
+  72%       { opacity: 1; transform: scale(1); }
+  87.5%     { opacity: 1; transform: scale(1); }
+  92%       { opacity: 0; transform: scale(1); }
+  100%      { opacity: 0; transform: scale(0.9); }
+}
+
+/* Reduced motion: freeze everything in final state, show diagram statically */
+@media (prefers-reduced-motion: reduce) {
+  .flow *,
+  .flow *::before {
+    animation: none !important;
+  }
+  .flow .trunk     { stroke-dashoffset: 0; opacity: 0.45; }
+  .flow .node      { opacity: 1; }
+  .flow .branch    { stroke-dashoffset: 0; opacity: 1; }
+  .flow .file      { opacity: 1; }
+  .flow text       { opacity: 1; }
+  .flow .pulse-g   { opacity: 0; }
+}
+
+/* Compact screens: stack the file labels under the branches */
+@media (max-width: 720px) {
+  .flow {
+    /* SVG natively scales — viewBox handles the resize. Just keep it. */
+  }
+}
+
+.codeblock {
+  background: var(--bg-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 14px 18px;
+  margin: 8px 0 18px;
+  color: var(--white);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+.btn {
+  display: inline-block;
+  padding: 8px 18px;
+  background: transparent;
+  color: var(--cyan-bright);
+  border: 1px solid var(--cyan);
+  border-radius: 2px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  box-shadow: var(--glow);
+  transition: all 0.15s ease;
+}
+.btn:hover { background: rgba(56, 212, 255, 0.1); color: var(--white); }
+.btn.ghost { border-color: var(--rule); color: var(--dim-2); box-shadow: none; }
+.btn.ghost:hover { color: var(--white); border-color: var(--dim-2); }
+
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--rule);
+}
+.footer a { color: var(--cyan-bright); text-decoration: none; border-bottom: 1px dotted var(--cyan); }
+.footer a:hover { color: var(--white); }
+
+/* Page-level reveal-on-scroll for the sections under the terminal */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   Trailing cursor at the bottom of the terminal output
+   ============================================================ */
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: var(--cyan-bright);
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  box-shadow: var(--glow);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .flicker { display: none; }
+  .cmd-cursor, .cursor { animation: none; opacity: 1; }
+  .reveal, .stage { opacity: 1; transform: none; }
+  .gauge-fill { width: var(--target); }
+  .focus-row .fgauge .fill { width: var(--target); }
+  .sparkline .b { transform: scaleY(1); }
+  .contributions .cell { opacity: 1; }
+  .scout-item { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   Small viewport
+   ============================================================ */
+
+@media (max-width: 720px) {
+  body { font-size: 12.5px; }
+  .tty { padding: 14px 14px 18px; font-size: 12px; }
+  .banner { font-size: 9px; }
+  .welcome { font-size: 11px; }
+  .stat-row .big { font-size: 17px; }
+  .ps1-host, .ps1-sep, .ps1-branch { display: none; }
+  .ps1-path { font-size: 12px; }
+  .efficiency {
+    grid-template-columns: 1fr auto auto;
+    gap: 6px 10px;
+  }
+  .efficiency .eff-spark { display: none; }
+  .efficiency .eff-deltas { display: none; }
+  .eff-head { display: none; }
+  .focus-row {
+    grid-template-columns: 18px 46px 1fr auto;
+  }
+  .focus-row .fgauge { display: none; }
+  .focus-row .range { display: none; }
+  .focus-row .rec { font-size: 11.5px; }
+  .tl-title { display: none; }
+}

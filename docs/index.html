@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>claude-daily — retro analytics for Claude Code</title>
+  <meta name="description" content="A daily dashboard for your Claude Code sessions. Renders at the top of every session via a SessionStart hook." />
+  <meta property="og:title" content="claude-daily" />
+  <meta property="og:description" content="Retro analytics dashboard for Claude Code sessions." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- CRT overlay layers (scanlines + flicker + vignette) -->
+  <div class="crt scanlines"></div>
+  <div class="crt vignette"></div>
+  <div class="crt flicker"></div>
+
+  <main class="page">
+
+    <!-- =================== TERMINAL WINDOW =================== -->
+    <section class="terminal">
+      <!-- Window chrome -->
+      <header class="titlebar">
+        <span class="tl-dot tl-red"></span>
+        <span class="tl-dot tl-yellow"></span>
+        <span class="tl-dot tl-green"></span>
+        <span class="tl-title">~/dev/github.com/gyanesh-m/claude-daily — claude — 120×40</span>
+      </header>
+
+      <!-- Terminal body -->
+      <div class="tty">
+
+        <!-- Step 1: prompt with the user typing `claude`.
+             Format: <arrow> <dir> git:(<branch>) <typed cmd>           -->
+        <div class="line prompt-line">
+          <span class="ps1-arrow"><span class="a1">❯</span><span class="a2">→</span></span>
+          <span class="ps1-path">claude-daily</span>
+          <span class="ps1-git">git:(<span class="ps1-branch">main</span>)</span>
+          <span class="ps1-mark">❯</span>
+          <span class="typed" id="typed-cmd"></span>
+          <span class="cmd-cursor"></span>
+        </div>
+
+        <!-- Step 2: Claude Code welcome screen (revealed after enter).
+             No box — a coral sprite on the left, 3 lines of label on the right. -->
+        <div class="welcome stage" id="welcome">
+          <div class="welcome-sprite" aria-hidden="true">
+            <!-- Squat coral mascot — 16x12 grid, 4px per pixel.            -->
+            <svg viewBox="0 0 64 48" width="64" height="48" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <!-- Outer body (slightly darker rim) -->
+              <g fill="#c95a48">
+                <rect x="8"  y="4"  width="48" height="4"/>
+                <rect x="4"  y="8"  width="56" height="4"/>
+                <rect x="4"  y="36" width="56" height="4"/>
+                <rect x="8"  y="40" width="16" height="4"/>
+                <rect x="40" y="40" width="16" height="4"/>
+                <rect x="4"  y="12" width="4"  height="24"/>
+                <rect x="56" y="12" width="4"  height="24"/>
+              </g>
+              <!-- Body fill -->
+              <g fill="#e8826a">
+                <rect x="8"  y="8"  width="48" height="28"/>
+                <rect x="12" y="36" width="40" height="4"/>
+                <rect x="12" y="40" width="12" height="4"/>
+                <rect x="40" y="40" width="12" height="4"/>
+              </g>
+              <!-- Top highlight stripe -->
+              <g fill="#f6a98e">
+                <rect x="12" y="8"  width="40" height="2"/>
+                <rect x="8"  y="10" width="4"  height="2"/>
+              </g>
+              <!-- Eye whites / sockets -->
+              <g fill="#3a1810">
+                <rect x="18" y="18" width="8"  height="8"/>
+                <rect x="38" y="18" width="8"  height="8"/>
+              </g>
+              <!-- Eye highlights -->
+              <g fill="#fff1e6">
+                <rect x="22" y="20" width="2"  height="2"/>
+                <rect x="42" y="20" width="2"  height="2"/>
+              </g>
+              <!-- Tiny smile -->
+              <g fill="#3a1810">
+                <rect x="28" y="30" width="8"  height="2"/>
+                <rect x="26" y="28" width="2"  height="2"/>
+                <rect x="36" y="28" width="2"  height="2"/>
+              </g>
+            </svg>
+          </div>
+          <div class="welcome-text">
+            <div class="wl-title">
+              <span class="bold white">Claude Code</span>
+              <span class="dim">v2.1.143</span>
+            </div>
+            <div class="wl-model dim">Sonnet 4.6 with high effort · Claude Max</div>
+            <div class="wl-cwd dim">~/dev/github.com/gyanesh-m/claude-daily</div>
+          </div>
+        </div>
+
+        <!-- Step 2b: the input prompt that follows the welcome screen.       -->
+        <div class="input-line stage" id="input-line">
+          <span class="input-arrow">›</span>
+          <span class="input-placeholder">Try "summarize my last 7 days"</span>
+        </div>
+
+        <!-- Step 2c: divider between the input area and the SessionStart
+             hook output. Empty line in real terminal.                       -->
+        <div class="divider stage" id="divider"></div>
+
+        <!-- Step 3: SessionStart hook fires; the dashboard streams in
+             line-by-line as the user scrolls. Lines are inserted before
+             the sentinel by app.js. -->
+        <div class="hook-output stage" id="hook-output">
+          <div class="stream" id="stream"></div>
+          <div class="print-sentinel" id="print-sentinel" aria-hidden="true"></div>
+          <div class="caret-line">
+            <span class="cmd-cursor"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claude Code status bar (always pinned to the bottom of the
+           terminal window, like the real CLI). -->
+      <footer class="status-bar">
+        <div class="sb-left">
+          <span class="sb-model">sonnet high</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-path">claude-daily</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-branch">main 🌿</span>
+          <span class="sb-sep">·</span>
+          <span class="sb-time" id="sb-time">01:47</span>
+        </div>
+        <div class="sb-right">
+          <span class="sb-dot"></span>
+          <span class="sb-effort">high · /effort</span>
+        </div>
+      </footer>
+    </section>
+
+    <!-- =================== PAGE-LEVEL CONTENT (outside terminal) =================== -->
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">What you just saw</h2>
+      <p class="lede dim">
+        Everything inside the terminal above is the actual output of the
+        <code>SessionStart</code> hook — what claude-daily prints every time
+        you start a new Claude Code session. The data shown is a sample;
+        your dashboard renders from your own <code>~/.claude/projects/*.jsonl</code> history.
+      </p>
+    </section>
+
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">How it works</h2>
+      <p class="lede dim">
+        Every Claude Code SessionStart fires <code>startup.sh</code>, which orchestrates a daily regen + two detached background workers, then renders the dashboard.
+      </p>
+
+      <figure class="flow-figure">
+        <!-- Inline SVG: ~5KB on the wire, pure CSS keyframes drive the
+             animation. No new JS dependencies. Loops every 7.5s.            -->
+        <svg class="flow" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-label="claude-daily SessionStart flow diagram">
+
+          <!-- Vertical timeline trunk -->
+          <line x1="80" y1="40" x2="80" y2="340" class="trunk"/>
+
+          <!-- Pulse that travels down the trunk -->
+          <g class="pulse-g">
+            <circle cx="80" cy="40" r="5" class="pulse"/>
+          </g>
+
+          <!-- ============ Step 1: SessionStart hook fires ============ -->
+          <circle cx="80" cy="40" r="6" class="node n1"/>
+          <text x="100" y="44" class="lbl s1">SessionStart hook fires</text>
+
+          <!-- ============ Step 2: daily-insights → metrics-store.json ============ -->
+          <circle cx="80" cy="110" r="5" class="node n2"/>
+          <text x="100" y="103" class="lbl s2">daily-insights</text>
+          <line x1="80" y1="110" x2="430" y2="110" class="branch s2"/>
+          <rect x="430" y="98" rx="3" ry="3" width="180" height="24" class="file s2"/>
+          <text x="438" y="114" class="file-label s2">metrics-store.json</text>
+
+          <!-- ============ Step 3: scout (background) ============ -->
+          <circle cx="80" cy="180" r="5" class="node n3"/>
+          <text x="100" y="173" class="lbl s3">scout
+            <tspan class="dim2"> · background</tspan>
+          </text>
+          <text x="100" y="190" class="sub s3">claude -p WebSearch+Write</text>
+          <line x1="80" y1="180" x2="430" y2="180" class="branch s3"/>
+          <rect x="430" y="168" rx="3" ry="3" width="180" height="24" class="file s3"/>
+          <text x="438" y="184" class="file-label s3">scout-results.json</text>
+
+          <!-- ============ Step 4: tag-sessions (background) ============ -->
+          <circle cx="80" cy="260" r="5" class="node n4"/>
+          <text x="100" y="253" class="lbl s4">tag-sessions
+            <tspan class="dim2"> · weekly</tspan>
+          </text>
+          <text x="100" y="270" class="sub s4">claude -p Read+Write</text>
+          <line x1="80" y1="260" x2="430" y2="260" class="branch s4"/>
+          <rect x="430" y="248" rx="3" ry="3" width="180" height="24" class="file s4"/>
+          <text x="438" y="264" class="file-label s4">session-tags.json</text>
+
+          <!-- ============ Step 5: dashboard renders ============ -->
+          <circle cx="80" cy="340" r="7" class="node n5"/>
+          <text x="100" y="344" class="lbl s5">dashboard renders
+            <tspan class="dim2"> · at the top of every session</tspan>
+          </text>
+        </svg>
+
+        <figcaption class="dim small">
+          The dashboard never blocks on network — <code>scout</code> and
+          <code>tag-sessions</code> spawn detached <code>claude -p</code>
+          workers via <code>nohup</code>. Their JSON outputs land in
+          <code>$CLAUDE_DAILY_DATA</code> and are picked up by the next session.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="page-section reveal" data-reveal>
+      <h2 class="page-h2">Install</h2>
+      <p class="dim">Inside Claude Code:</p>
+      <pre class="codeblock">
+<span class="dim">$</span> /plugin marketplace add gyanesh-m/claude-daily
+<span class="dim">$</span> /plugin install claude-daily@claude-daily
+<span class="dim">$</span> /reload-plugins</pre>
+      <p class="dim">Or standalone:</p>
+      <pre class="codeblock">
+<span class="dim">$</span> git clone https://github.com/gyanesh-m/claude-daily.git
+<span class="dim">$</span> cd claude-daily && ./install.sh</pre>
+      <div class="cta">
+        <a class="btn" href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">view on github</a>
+        <a class="btn ghost" href="https://github.com/gyanesh-m/claude-daily/pull/1" target="_blank" rel="noopener">pr #1</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p class="dim small">
+        <a href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">github</a> ·
+        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/README.md" target="_blank" rel="noopener">readme</a> ·
+        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">eval set</a>
+      </p>
+      <p class="ascii small dim">[ press any key to continue ]</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
