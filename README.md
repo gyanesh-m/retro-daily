@@ -19,9 +19,18 @@
 
 A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, contributions heatmap, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
 
+![retro-daily dashboard at the top of a Claude Code session](docs/screenshots/terminal-top.png)
+
+**[Live demo →](https://gyanesh-m.github.io/retro-daily/)** &nbsp;·&nbsp; animated CRT terminal that streams the dashboard line-by-line as you scroll.
+
 ## Sample output
 
 > The numbers below are sample data drawn from the author's own session history — your dashboard renders from your local `~/.claude/projects/*.jsonl`.
+
+![Full dashboard scrolled through](docs/screenshots/terminal-dashboard.png)
+
+<details>
+<summary>Plain-text version</summary>
 
 ```
 R E T R O  ·  D A I L Y                                   Sun May 17
@@ -61,6 +70,8 @@ S C O U T   F I N D I N G S
       → If on Team plan, run `claude --permission-mode auto` ...
       ★ oryband/claude-code-auto-approve · Install as a PreToolUse hook ...
 ```
+
+</details>
 
 ## Install
 
@@ -152,6 +163,8 @@ Session tags are surfaced as the `topics` and `interaction_types` fields per day
 ## How it works
 
 Every new Claude Code session fires the `SessionStart` hook, which calls `startup.sh`. That script runs four steps sequentially; two of them (`scout`, `tag-sessions`) spawn detached `claude -p` background workers and return immediately, so the rest of the dashboard renders without waiting on network or LLM calls.
+
+![SessionStart flow diagram — accumulate-and-dim cascade with trunk drawing down to each step](docs/screenshots/flow-diagram.gif)
 
 ```mermaid
 sequenceDiagram

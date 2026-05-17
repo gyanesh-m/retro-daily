@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "retro-daily",
-      "source": ".",
+      "source": "./",
       "description": "Retro daily analytics dashboard for Claude Code sessions, rendered via SessionStart hook."
     }
   ]
