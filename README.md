@@ -21,6 +21,8 @@ A daily dashboard for your Claude Code sessions. Renders at the top of every ses
 
 ![retro-daily dashboard at the top of a Claude Code session](docs/screenshots/terminal-top.png)
 
+**[Live demo →](https://gyanesh-m.github.io/retro-daily/)** &nbsp;·&nbsp; animated CRT terminal that streams the dashboard line-by-line as you scroll.
+
 ## Sample output
 
 > The numbers below are sample data drawn from the author's own session history — your dashboard renders from your local `~/.claude/projects/*.jsonl`.
