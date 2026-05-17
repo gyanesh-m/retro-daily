@@ -6,8 +6,6 @@
 
 ![retro-daily dashboard at the top of a Claude Code session](docs/screenshots/terminal-top.png)
 
-**[Live demo →](https://gyanesh-m.github.io/retro-daily/)** &nbsp;·&nbsp; animated CRT terminal that streams the dashboard line-by-line as you scroll.
-
 Renders at the top of every Claude Code session via a `SessionStart` hook:
 
 - **All-time + last-7-days totals** — sessions, tools, days, cost (API-equivalent)
@@ -43,12 +41,12 @@ C O M P E T E N C Y
 E F F I C I E N C Y
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   metric            value   14-day trend     7d   30d   status
-  Edit / Read         1.0   ▄▂▁▃▂▃▂▅▄█▄█▄▁   ↓    ↓     ⬤ good
-  Auto-approve      65.7%   ▇▆▁▇▃▆▆▄▆█▇██▂   ↓    ↓     ⬤ bad
-  First-try         83.4%   ▇██▇▇███▇▇█▇█▁   ↓    ↓     ⬤ good
+  Edit / Read         1.0   ▄▂▁▃▂▃▂▅▄█▄█▄▁   →    ↑     ⬤ good
+  Auto-approve      65.7%   ▇▆▁▇▃▆▆▄▆█▇██▂   ↑    →     ⬤ bad
+  First-try         83.4%   ▇██▇▇███▇▇█▇█▁   ↑    ↑     ⬤ good
   Corrections       15.1%   ▇▄▃▄█▂▁▂▁▁▃▁▁▁   ↓    ↓     ⬤ bad
-  Tool errors       10.2%   ▂▄▅▁▃▂▂▂▃█▃█▃▁   ↓    ↓     ⬤ bad
-  Ctx hygiene       50.0%   ·········▁▁▁██   ↓    ↓     ⬤ warn
+  Tool errors       10.2%   ▂▄▅▁▃▂▂▂▃█▃█▃▁   →    ↓     ⬤ bad
+  Ctx hygiene       50.0%   ·········▁▁▁██   ↑    →     ⬤ warn
 
 C O N T R I B U T I O N S
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -99,6 +97,36 @@ cd retro-daily && ./install.sh
 Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` via `jq` (idempotent; falls back to printing the JSON to paste manually if `jq` is missing).
 
 Open a new Claude Code session — the dashboard renders.
+
+### Migrating from standalone to plugin
+
+If you started with Option B and want to switch to Option A, both `SessionStart` hooks will fire (the one in `~/.claude/settings.json` *and* the plugin's own hook from `hooks/hooks.json`) until you remove the standalone entry. The dashboard renders twice, the metrics get written to two different data dirs, and on Claude Code v2.1.x the visible terminal output gets confused. To migrate cleanly:
+
+```sh
+# 1. Back up the standalone scripts + data
+BACKUP="$HOME/.claude/metrics-backup-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$BACKUP"
+cd "$HOME/.claude/metrics"
+for f in startup.sh daily-insights.sh scout.sh scout-runner.sh \
+         scout-review.sh scout-browse.sh tag-sessions.sh \
+         tag-sessions-runner.sh setup-venv.sh _paths.sh \
+         generate-metrics.py prompt_classifier.py metric_advisor.py \
+         session_enricher.py requirements.txt \
+         metrics-store.json analysis-history.json last-run-date.txt \
+         scout-queries.json scout-results.json session-tags.json \
+         scout.log tag-sessions.log; do
+  [ -e "$f" ] && mv "$f" "$BACKUP/"
+done
+for d in scout-archive session-tags-archive; do
+  [ -d "$d" ] && mv "$d" "$BACKUP/"
+done
+
+# 2. Remove the standalone SessionStart hook from settings.json
+jq '.hooks.SessionStart[0].hooks |= map(select(.command | contains("metrics/startup.sh") | not))' \
+   ~/.claude/settings.json > /tmp/settings.new && mv /tmp/settings.new ~/.claude/settings.json
+```
+
+The plugin's data dir (`~/.claude/plugins/data/retro-daily-retro-daily/`) regenerates from your `~/.claude/projects/*.jsonl` on the next session — no manual data migration needed.
 
 ## Paths
 
@@ -193,8 +221,9 @@ sequenceDiagram
     else stale or changed
         SC->>SR: nohup spawn (detached)
         SC-->>SU: queued
-        SR->>SR: claude -p (WebSearch + Write)
-        Note right of SR: writes /tmp → mv to<br/>scout-results.json<br/>archives previous<br/>updates analysis-history.json
+        SR->>SR: cd $(mktemp -d)
+        SR->>SR: claude -p (sandboxed: /tmp + WebSearch only)
+        Note right of SR: --settings sandbox JSON<br/>--setting-sources project<br/>--allowedTools WebSearch Write<br/>writes /tmp → mv to<br/>scout-results.json
     end
 
     SU->>TS: step 3
@@ -204,8 +233,9 @@ sequenceDiagram
         TS->>TR: nohup spawn (detached)
         TS-->>SU: queued
         TR->>TR: build digest from ~/.claude/projects/
-        TR->>TR: claude -p (Read + Write)
-        Note right of TR: writes /tmp → mv to<br/>session-tags.json<br/>archives previous<br/>updates analysis-history.json
+        TR->>TR: cd $(mktemp -d)
+        TR->>TR: claude -p (sandboxed: /tmp only, no network)
+        Note right of TR: --settings sandbox JSON<br/>--setting-sources project<br/>--allowedTools Read Write<br/>writes /tmp → mv to<br/>session-tags.json
     end
 
     SU->>SV: step 4
@@ -234,13 +264,16 @@ Default `$RETRO_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${CL
 |---|---|---|---|
 | `metrics-store.json` | `generate-metrics.py` | daily | append-only daily aggregates + cumulative roll-up |
 | `last-run-date.txt` | `generate-metrics.py` | daily | gate so the expensive regen runs at most once per day |
+| `scout-queries.json` | `generate-metrics.py` | per regen | weak-metric set + the 6 search queries scout-runner will execute; signal file that triggers `scout.sh` to spawn the background worker |
 | `scout-results.json` | `scout-runner.sh` | ≥7 days | latest scout findings rendered by `scout-review.sh` |
-| `scout-archive/*.json` | `scout-runner.sh` | ≥7 days | timestamped snapshots of prior scouts (read by `scout-browse.sh`) |
+| `scout-archive/YYYY-MM-DD-HHMMSS.json` | `scout-runner.sh` | ≥7 days | timestamped snapshots of prior scouts (read by `scout-browse.sh`) |
+| `scout.log` | `scout-runner.sh` | per spawn | append-only worker log; `tail` this to debug stuck/failed scout runs |
 | `session-tags.json` | `tag-sessions-runner.sh` | 7 days | LLM-derived `{id → topic, interaction_type}` map joined into daily metrics |
-| `session-tags-archive/*.json` | `tag-sessions-runner.sh` | 7 days | timestamped snapshots of prior tag runs |
+| `session-tags-archive/YYYY-MM-DD-HHMMSS.json` | `tag-sessions-runner.sh` | 7 days | timestamped snapshots of prior tag runs |
+| `tag-sessions.log` | `tag-sessions-runner.sh` | per spawn | append-only worker log for the weekly tagger |
 | `analysis-history.json` | both runners | per run | last-run dates + last weak-metric set; gates the two runners |
 | `.scout.lock` / `.tag-sessions.lock` | runners | transient | PID files preventing double-spawn |
-| `.venv/` | `setup-venv.sh` | install | isolated Python env for `sentence-transformers` and optional NLI |
+| `.venv/` | `setup-venv.sh` | install / update | isolated Python env for `sentence-transformers` and optional NLI |
 
 **Cadence implication.** Tag results lag by up to 7 days. A session created today won't have a topic in the dashboard until the next weekly tagging run — it'll show up under `topics: untagged` in `metrics-store.json` and the corresponding dashboard line. Force an immediate run with `TAG_FORCE=1 bash tag-sessions.sh` if you want to backfill.
 
@@ -275,6 +308,8 @@ Rather than bypass those hooks with `--dangerously-skip-permissions` (which woul
 | `_paths.sh` | shared `RETRO_DAILY_HOME` / `RETRO_DAILY_DATA` resolution |
 | `install.sh` + `setup-venv.sh` + `requirements.txt` | standalone installer + Python venv bootstrap |
 | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |
+| `LICENSE` | MIT, applies to all repo content |
+| `docs/index.html` + `docs/app.js` + `docs/style.css` + `docs/screenshots/*` | GitHub Pages landing page (animated CRT demo) |
 
 ## Uninstall
 
@@ -286,16 +321,71 @@ Rather than bypass those hooks with `--dangerously-skip-permissions` (which woul
 
 This also clears `~/.claude/plugins/data/retro-daily-retro-daily/`. Pass `--keep-data` to preserve the metrics store across reinstalls.
 
-**Standalone install:**
+**Standalone install:** remove only the files retro-daily wrote — `~/.claude/metrics/` may contain other things you care about (your own venv, scripts, notes), so don't `rm -rf` the whole directory.
 
 ```sh
-rm -rf ~/.claude/metrics
+cd ~/.claude/metrics
+rm -f startup.sh daily-insights.sh scout.sh scout-runner.sh scout-review.sh \
+      scout-browse.sh tag-sessions.sh tag-sessions-runner.sh setup-venv.sh \
+      _paths.sh generate-metrics.py prompt_classifier.py metric_advisor.py \
+      session_enricher.py requirements.txt \
+      metrics-store.json analysis-history.json last-run-date.txt \
+      scout-queries.json scout-results.json session-tags.json \
+      scout.log tag-sessions.log
+rm -rf scout-archive session-tags-archive .venv
+
+# Remove the standalone SessionStart hook from settings.json
+jq '.hooks.SessionStart[0].hooks |= map(select(.command | contains("metrics/startup.sh") | not))' \
+   ~/.claude/settings.json > /tmp/settings.new && mv /tmp/settings.new ~/.claude/settings.json
 ```
 
-Then remove the `SessionStart` hook entry from `~/.claude/settings.json`.
+## Compatibility notes
 
+**Claude Code v2.1.x** changed how `SessionStart` hook output reaches the user. Per the [hooks docs](https://code.claude.com/docs/en/hooks):
+
+| Output channel | What the user sees in their terminal | What the LLM sees in context |
+|---|---|---|
+| Plain stdout from the hook | nothing visible (v2.1.x routes it into `additionalContext`) | the full output as system context |
+| `hookSpecificOutput.additionalContext` (JSON) | nothing visible | adds to system context |
+| `systemMessage` (JSON) | rendered inline at the top of the session | nothing |
+
+retro-daily's `startup.sh` emits a JSON document with **both** `systemMessage` (so you see the dashboard rendered in your terminal) and `hookSpecificOutput.additionalContext` (so Claude can answer questions about your stats). On v2.0.x and earlier (line-by-line output, no full-screen TUI), plain stdout would have rendered directly — the JSON envelope works on both.
+
+If you don't see the dashboard at the top of a fresh session: `tail /tmp/claude-startup.log` to confirm the hook ran and the dashboard was generated, then read the [Troubleshooting](#troubleshooting) section.
+
+## Troubleshooting
+
+### Scout shows `queued · last run never` forever
+
+The scout-runner background worker spawned but never wrote results. Diagnose:
+
+```sh
+tail ~/.claude/plugins/data/retro-daily-retro-daily/scout.log     # plugin install
+tail ~/.claude/metrics/scout.log                                  # standalone
 ```
-                  [ press any key to continue ]
+
+Look for `WARNING: temp results file was not written`. The usual cause is a third-party `PreToolUse` hook (e.g. Sage) returning `"ask"` against the unattended worker — see [Security model](#security-model-for-background-workers) for how the sandbox + `--setting-sources project` combo handles this. If `RETRO_DAILY_NO_BACKGROUND_WORKERS=1` is set, scout is intentionally skipped.
+
+### "I installed it but I don't see anything"
+
+Most likely: plain stdout went to `additionalContext` (LLM-visible only) on v2.1.x. The fixed `startup.sh` emits `systemMessage` so this should be visible — but if you have a stale plugin cache, force an update:
+
+```sh
+/plugin marketplace update retro-daily
+```
+
+Also check `/tmp/claude-startup.log` — if the dashboard rendered there but not in the terminal, your plugin version is missing the JSON-envelope fix.
+
+### Two dashboards rendering on every session start
+
+You have both the standalone install AND the plugin install registered. See [Migrating from standalone to plugin](#migrating-from-standalone-to-plugin).
+
+### Worker fails with `sandbox unavailable`
+
+Older macOS or stripped-down Linux containers may not have the sandbox toolchain (`sandbox-exec` / `bubblewrap`). `failIfUnavailable: true` causes the worker to abort rather than silently run unsandboxed. To skip scout + tag-sessions entirely on such systems:
+
+```sh
+export RETRO_DAILY_NO_BACKGROUND_WORKERS=1
 ```
 
 ---
