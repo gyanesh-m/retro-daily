@@ -9,10 +9,10 @@ trap '' HUP
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-RESULTS_FILE="$CLAUDE_DAILY_DATA/session-tags.json"
-HISTORY_FILE="$CLAUDE_DAILY_DATA/analysis-history.json"
-LOG="$CLAUDE_DAILY_DATA/tag-sessions.log"
-LOCK="$CLAUDE_DAILY_DATA/.tag-sessions.lock"
+RESULTS_FILE="$RETRO_DAILY_DATA/session-tags.json"
+HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
+LOG="$RETRO_DAILY_DATA/tag-sessions.log"
+LOCK="$RETRO_DAILY_DATA/.tag-sessions.lock"
 DIGEST_FILE="/tmp/claude-tag-digest-$$.json"
 TMP_RESULTS="/tmp/claude-tag-results-$$.json"
 
@@ -188,7 +188,7 @@ if ! python3 -c "import json; json.load(open('$TMP_RESULTS'))" 2>/dev/null; then
 fi
 
 # Archive previous results.
-ARCHIVE_DIR="$CLAUDE_DAILY_DATA/session-tags-archive"
+ARCHIVE_DIR="$RETRO_DAILY_DATA/session-tags-archive"
 mkdir -p "$ARCHIVE_DIR"
 if [ -f "$RESULTS_FILE" ]; then
   PREV_DATE=$(python3 -c "import json; print(json.load(open('$RESULTS_FILE')).get('date','unknown'))" 2>/dev/null || echo "unknown")

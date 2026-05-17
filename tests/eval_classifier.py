@@ -83,7 +83,7 @@ def main():
         from prompt_classifier import PromptClassifier
     except ImportError as e:
         print(f"Cannot import PromptClassifier: {e}", file=sys.stderr)
-        print("Hint: run setup-venv.sh and use $CLAUDE_DAILY_DATA/.venv/bin/python3", file=sys.stderr)
+        print("Hint: run setup-venv.sh and use $RETRO_DAILY_DATA/.venv/bin/python3", file=sys.stderr)
         return 2
 
     print("Loading classifier (first run downloads model)...")

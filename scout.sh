@@ -4,10 +4,10 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-QUERIES_FILE="$CLAUDE_DAILY_DATA/scout-queries.json"
-HISTORY_FILE="$CLAUDE_DAILY_DATA/analysis-history.json"
-RUNNER="$CLAUDE_DAILY_HOME/scout-runner.sh"
-LOG="$CLAUDE_DAILY_DATA/scout.log"
+QUERIES_FILE="$RETRO_DAILY_DATA/scout-queries.json"
+HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
+RUNNER="$RETRO_DAILY_HOME/scout-runner.sh"
+LOG="$RETRO_DAILY_DATA/scout.log"
 
 [ -f "$QUERIES_FILE" ] || exit 0
 

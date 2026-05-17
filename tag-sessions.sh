@@ -7,9 +7,9 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-HISTORY_FILE="$CLAUDE_DAILY_DATA/analysis-history.json"
-RUNNER="$CLAUDE_DAILY_HOME/tag-sessions-runner.sh"
-LOG="$CLAUDE_DAILY_DATA/tag-sessions.log"
+HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
+RUNNER="$RETRO_DAILY_HOME/tag-sessions-runner.sh"
+LOG="$RETRO_DAILY_DATA/tag-sessions.log"
 
 TAG_STALE_DAYS=${TAG_STALE_DAYS:-7}
 

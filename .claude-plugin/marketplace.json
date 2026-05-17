@@ -1,12 +1,12 @@
 {
-  "name": "claude-daily",
+  "name": "retro-daily",
   "owner": {
     "name": "gyanesh-m"
   },
-  "description": "Single-plugin marketplace for claude-daily — a retro daily analytics dashboard for Claude Code sessions.",
+  "description": "Single-plugin marketplace for retro-daily — a retro daily analytics dashboard for Claude Code sessions.",
   "plugins": [
     {
-      "name": "claude-daily",
+      "name": "retro-daily",
       "source": ".",
       "description": "Retro daily analytics dashboard for Claude Code sessions, rendered via SessionStart hook."
     }

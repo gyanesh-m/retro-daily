@@ -8,12 +8,12 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-CURRENT="$CLAUDE_DAILY_DATA/scout-results.json"
-ARCHIVE_DIR="$CLAUDE_DAILY_DATA/scout-archive"
+CURRENT="$RETRO_DAILY_DATA/scout-results.json"
+ARCHIVE_DIR="$RETRO_DAILY_DATA/scout-archive"
 
 FILTER="${1:-}"
 
-CLAUDE_DAILY_DATA="$CLAUDE_DAILY_DATA" python3 - "$FILTER" <<'PYEOF' | less -R
+RETRO_DAILY_DATA="$RETRO_DAILY_DATA" python3 - "$FILTER" <<'PYEOF' | less -R
 import json, sys, re, os, glob
 from pathlib import Path
 
@@ -26,7 +26,7 @@ CYAN = _c(36); BRIGHT_CYAN = _c(96); BRIGHT_WHITE = _c(97)
 BRIGHT_YELLOW = _c(93); BRIGHT_GREEN = _c(92); BRIGHT_MAGENTA = _c(95)
 RULE = 72
 
-metrics_dir = Path(os.environ["CLAUDE_DAILY_DATA"])
+metrics_dir = Path(os.environ["RETRO_DAILY_DATA"])
 archive_dir = metrics_dir / "scout-archive"
 current = metrics_dir / "scout-results.json"
 

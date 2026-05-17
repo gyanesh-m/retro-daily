@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate daily Claude Code metrics from JSONL session logs across ALL projects.
-Runs once per day, processes only new dates, stores state under $CLAUDE_DAILY_DATA
+Runs once per day, processes only new dates, stores state under $RETRO_DAILY_DATA
 (default: ~/.claude/metrics).
 Outputs brief insights to stdout for the SessionStart hook.
 """
@@ -14,8 +14,8 @@ CLAUDE_DIR = Path.home() / ".claude"
 PROJECTS_DIR = CLAUDE_DIR / "projects"
 # CODE_DIR is where the scripts live; DATA_DIR is where mutable state lives.
 # Defaults keep the legacy single-dir layout (~/.claude/metrics) intact.
-CODE_DIR = Path(os.environ.get("CLAUDE_DAILY_HOME") or Path(__file__).resolve().parent)
-DATA_DIR = Path(os.environ.get("CLAUDE_DAILY_DATA") or (CLAUDE_DIR / "metrics"))
+CODE_DIR = Path(os.environ.get("RETRO_DAILY_HOME") or Path(__file__).resolve().parent)
+DATA_DIR = Path(os.environ.get("RETRO_DAILY_DATA") or (CLAUDE_DIR / "metrics"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 METRICS_DIR = DATA_DIR  # backwards-compat alias for any external readers
 STORE_FILE = DATA_DIR / "metrics-store.json"
@@ -45,9 +45,9 @@ PRICING = {
 }
 
 # Cost numbers are computed at API list price; they are NOT what you actually pay
-# if you're on a Claude subscription. CLAUDE_DAILY_PLAN_LABEL lets users name their
+# if you're on a Claude subscription. RETRO_DAILY_PLAN_LABEL lets users name their
 # plan so the footer reads, e.g., "capped by Claude Max $100/mo". Unset = generic.
-PLAN_LABEL = os.environ.get("CLAUDE_DAILY_PLAN_LABEL", "").strip()
+PLAN_LABEL = os.environ.get("RETRO_DAILY_PLAN_LABEL", "").strip()
 
 def model_family(model_id: str) -> str:
     m = (model_id or "").lower()
@@ -999,7 +999,7 @@ def print_insights(store, yesterday_str):
 
     # ── Header: minimal editorial mark ─────────────────────────────────────────
     today_str = datetime.now().strftime('%a %b %d')
-    left = f"{BRIGHT_CYAN}{BOLD}{' '.join('CLAUDE')}{RESET}  {DIM}·{RESET}  {BRIGHT_CYAN}{' '.join('DAILY')}{RESET}"
+    left = f"{BRIGHT_CYAN}{BOLD}{' '.join('RETRO')}{RESET}  {DIM}·{RESET}  {BRIGHT_CYAN}{' '.join('DAILY')}{RESET}"
     right = f"{DIM}{today_str}{RESET}"
     left_w = _visible_len(left)
     right_w = _visible_len(right)
