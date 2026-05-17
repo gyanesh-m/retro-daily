@@ -10,11 +10,11 @@ trap '' HUP
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-QUERIES_FILE="$CLAUDE_DAILY_DATA/scout-queries.json"
-RESULTS_FILE="$CLAUDE_DAILY_DATA/scout-results.json"
-HISTORY_FILE="$CLAUDE_DAILY_DATA/analysis-history.json"
-LOG="$CLAUDE_DAILY_DATA/scout.log"
-LOCK="$CLAUDE_DAILY_DATA/.scout.lock"
+QUERIES_FILE="$RETRO_DAILY_DATA/scout-queries.json"
+RESULTS_FILE="$RETRO_DAILY_DATA/scout-results.json"
+HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
+LOG="$RETRO_DAILY_DATA/scout.log"
+LOCK="$RETRO_DAILY_DATA/.scout.lock"
 
 log() { echo "[$(date +%H:%M:%S)] $*" >> "$LOG"; }
 
@@ -47,7 +47,7 @@ log "scout-runner: starting for metrics=[$WEAK]"
 log "queries:"
 while IFS= read -r q; do log "  - $q"; done <<< "$QUERIES"
 
-# Have Claude write to /tmp (unrestricted), then we'll mv into $CLAUDE_DAILY_DATA.
+# Have Claude write to /tmp (unrestricted), then we'll mv into $RETRO_DAILY_DATA.
 # ~/.claude/ is treated as a sensitive path and triggers permission prompts even with
 # --allowedTools — writing to /tmp sidesteps that cleanly.
 TMP_RESULTS="/tmp/claude-scout-results-$$.json"
@@ -131,7 +131,7 @@ if ! python3 -c "import json; json.load(open('$TMP_RESULTS'))" 2>/dev/null; then
 fi
 
 # Archive the previous results (if any) before overwriting, so search/history is preserved.
-ARCHIVE_DIR="$CLAUDE_DAILY_DATA/scout-archive"
+ARCHIVE_DIR="$RETRO_DAILY_DATA/scout-archive"
 mkdir -p "$ARCHIVE_DIR"
 if [ -f "$RESULTS_FILE" ]; then
   PREV_DATE=$(python3 -c "import json; d=json.load(open('$RESULTS_FILE')); print(d.get('date','unknown'))" 2>/dev/null || echo "unknown")

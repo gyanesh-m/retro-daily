@@ -1,12 +1,12 @@
 /* ============================================================
-   claude-daily landing page — terminal teletype
+   retro-daily landing page — terminal teletype
 
    Page narrative:
      1. user is at a project prompt
      2. types `claude`, hits enter
      3. Claude Code welcome screen renders (sprite + title + cwd)
      4. Input prompt placeholder appears
-     5. SessionStart hook fires → claude-daily dashboard streams in
+     5. SessionStart hook fires → retro-daily dashboard streams in
         line by line, viewport-gated: pauses when the next line would
         sit below the visible area; resumes when the user scrolls.
    ============================================================ */

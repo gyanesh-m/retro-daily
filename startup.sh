@@ -39,9 +39,9 @@ run_step() {
 # Order matters: dashboard first (scrolls to top of terminal), scout findings
 # LAST so they stay visible near the prompt when the session opens. Earlier
 # reverse order buried scout above the viewport.
-run_step "daily-insights" bash "$CLAUDE_DAILY_HOME/daily-insights.sh" || true
-run_step "scout"          bash "$CLAUDE_DAILY_HOME/scout.sh"          || true
-run_step "tag-sessions"   bash "$CLAUDE_DAILY_HOME/tag-sessions.sh"   || true
-run_step "scout-review"   bash "$CLAUDE_DAILY_HOME/scout-review.sh"   || true
+run_step "daily-insights" bash "$RETRO_DAILY_HOME/daily-insights.sh" || true
+run_step "scout"          bash "$RETRO_DAILY_HOME/scout.sh"          || true
+run_step "tag-sessions"   bash "$RETRO_DAILY_HOME/tag-sessions.sh"   || true
+run_step "scout-review"   bash "$RETRO_DAILY_HOME/scout-review.sh"   || true
 
 echo "===== startup.sh finished at $(date -u +%Y-%m-%dT%H:%M:%SZ) =====" >> "$DEBUG_LOG"

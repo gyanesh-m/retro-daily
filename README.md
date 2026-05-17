@@ -1,17 +1,20 @@
 ```
-   ▄████▄   ██▓    ▄▄▄       █    ██ ▓█████▄ ▓█████
-  ▒██▀ ▀█  ▓██▒   ▒████▄     ██  ▓██▒▒██▀ ██▌▓█   ▀
-  ▒▓█    ▄ ▒██░   ▒██  ▀█▄  ▓██  ▒██░░██   █▌▒███
-  ▒▓▓▄ ▄██▒▒██░   ░██▄▄▄▄██ ▓▓█  ░██░░▓█▄   ▌▒▓█  ▄
-  ▒ ▓███▀ ░░██████▒▓█   ▓██▒▒▒█████▓ ░▒████▓ ░▒████▒
-  ░ ░▒ ▒  ░░ ▒░▓  ░▒▒   ▓▒█░░▒▓▒ ▒ ▒  ▒▒▓  ▒ ░░ ▒░ ░
-    ░  ▒   ░ ░ ▒  ░ ▒   ▒▒ ░░░▒░ ░ ░  ░ ▒  ▒  ░ ░  ░
-  ░          ░ ░    ░   ▒    ░░░ ░ ░  ░ ░  ░    ░
-  ░ ░          ░  ░     ░  ░   ░        ░       ░  ░
+  d8888b. d88888b d888888b d8888b.  .d88b.
+  88  `8D 88'     `~~88~~' 88  `8D .8P  Y8.
+  88oobY' 88ooooo    88    88oobY' 88    88
+  88`8b   88~~~~~    88    88`8b   88    88
+  88 `88. 88.        88    88 `88. `8b  d8'
+  88   YD Y88888P    YP    88   YD  `Y88P'
 
-           D · A · I · L · Y    [v0.1]
-       ════════════════════════════════════
-        retro analytics for claude code
+  d8888b.  .d8b.  d888888b db      db    db
+  88  `8D d8' `8b   `88'   88      `8b  d8'
+  88   88 88ooo88    88    88       `8bd8'
+  88   88 88~~~88    88    88         88
+  88  .8D 88   88   .88.   88booo.    88
+  Y8888D' YP   YP Y888888P Y88888P    YP            [v0.1]
+
+      ════════════════════════════════════════════
+       a daily retro for your claude code sessions
 ```
 
 A daily dashboard for your Claude Code sessions. Renders at the top of every session via a `SessionStart` hook — sessions, tools, cost, competency grade, efficiency trends, contributions heatmap, and a self-updating "scout" that searches docs and GitHub for ideas tied to your weakest metrics.
@@ -68,24 +71,24 @@ S C O U T   F I N D I N G S
 Inside Claude Code:
 
 ```
-/plugin marketplace add gyanesh-m/claude-daily
-/plugin install claude-daily@claude-daily
+/plugin marketplace add gyanesh-m/retro-daily
+/plugin install retro-daily@retro-daily
 /reload-plugins
 ```
 
-The repo doubles as its own single-plugin marketplace. State lives under `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/claude-daily-claude-daily/`) so plugin updates and uninstalls clean up after themselves.
+The repo doubles as its own single-plugin marketplace. State lives under `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/retro-daily-retro-daily/`) so plugin updates and uninstalls clean up after themselves.
 
 Test against a local clone before publishing:
 
 ```sh
-claude --plugin-dir ./claude-daily
+claude --plugin-dir ./retro-daily
 ```
 
 ### Option B — standalone script
 
 ```sh
-git clone https://github.com/gyanesh-m/claude-daily.git
-cd claude-daily && ./install.sh
+git clone https://github.com/gyanesh-m/retro-daily.git
+cd retro-daily && ./install.sh
 ```
 
 Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` via `jq` (idempotent; falls back to printing the JSON to paste manually if `jq` is missing).
@@ -98,11 +101,11 @@ The scripts resolve their layout from two env vars. Defaults preserve the legacy
 
 | Env var | Standalone default | Plugin default |
 |---|---|---|
-| `CLAUDE_DAILY_HOME` | script's own directory | `${CLAUDE_PLUGIN_ROOT}` |
-| `CLAUDE_DAILY_DATA` | `~/.claude/metrics` | `${CLAUDE_PLUGIN_DATA}` |
-| `CLAUDE_DAILY_PLAN_LABEL` | unset → generic footer | unset → generic footer |
+| `RETRO_DAILY_HOME` | script's own directory | `${CLAUDE_PLUGIN_ROOT}` |
+| `RETRO_DAILY_DATA` | `~/.claude/metrics` | `${CLAUDE_PLUGIN_DATA}` |
+| `RETRO_DAILY_PLAN_LABEL` | unset → generic footer | unset → generic footer |
 
-Set `CLAUDE_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"API"`, etc.) if you want the cost footer to name your plan. Claude Code does not expose the active subscription tier programmatically, so this can't be auto-detected.
+Set `RETRO_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"API"`, etc.) if you want the cost footer to name your plan. Claude Code does not expose the active subscription tier programmatically, so this can't be auto-detected.
 
 ## Requirements
 
@@ -114,7 +117,7 @@ Set `CLAUDE_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"
 
 The prompt classifier uses `sentence-transformers` (~90MB MiniLM, required for topic similarity) and optionally `transformers` + `sentencepiece` (~500MB DeBERTa NLI, fallback for reactions that don't match any lexical cue). On the synthetic eval, lexical cues alone classify 49/50 cases correctly — NLI is insurance, not the primary path.
 
-These are installed into a venv at `${CLAUDE_DAILY_DATA}/.venv` so they don't pollute system Python.
+These are installed into a venv at `${RETRO_DAILY_DATA}/.venv` so they don't pollute system Python.
 
 **Standalone install** runs `setup-venv.sh` automatically — first run downloads ~600MB of model deps.
 
@@ -127,9 +130,9 @@ bash ~/.claude/plugins/cache/<marketplace>/<plugin>/setup-venv.sh
 Or, simpler — clone and run:
 
 ```sh
-git clone https://github.com/gyanesh-m/claude-daily.git
-CLAUDE_DAILY_DATA=~/.claude/plugins/data/claude-daily-claude-daily \
-  bash ./claude-daily/setup-venv.sh
+git clone https://github.com/gyanesh-m/retro-daily.git
+RETRO_DAILY_DATA=~/.claude/plugins/data/retro-daily-retro-daily \
+  bash ./retro-daily/setup-venv.sh
 ```
 
 The dashboard renders even without the venv — only the embedding-driven prompt outcome classification (APPROVAL / REFINEMENT / CORRECTION) is skipped.
@@ -216,9 +219,9 @@ flowchart LR
     N -- no --> D[return REFINEMENT<br/>confidence = 0.0]
 ```
 
-### State files under `$CLAUDE_DAILY_DATA/`
+### State files under `$RETRO_DAILY_DATA/`
 
-Default `$CLAUDE_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${CLAUDE_PLUGIN_DATA}` (plugin install).
+Default `$RETRO_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${CLAUDE_PLUGIN_DATA}` (plugin install).
 
 | File | Writer | Cadence | Purpose |
 |---|---|---|---|
@@ -245,7 +248,7 @@ Default `$CLAUDE_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${C
 | `scout.sh` + `scout-runner.sh` + `scout-review.sh` + `scout-browse.sh` | background scout worker for weak-metric guidance |
 | `tag-sessions.sh` + `tag-sessions-runner.sh` | weekly LLM session tagger |
 | `tests/eval.json` + `tests/eval_classifier.py` + `tests/sample_pairs.py` | classifier regression test |
-| `_paths.sh` | shared `CLAUDE_DAILY_HOME` / `CLAUDE_DAILY_DATA` resolution |
+| `_paths.sh` | shared `RETRO_DAILY_HOME` / `RETRO_DAILY_DATA` resolution |
 | `install.sh` + `setup-venv.sh` + `requirements.txt` | standalone installer + Python venv bootstrap |
 | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |
 
@@ -254,10 +257,10 @@ Default `$CLAUDE_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${C
 **Plugin install:**
 
 ```
-/plugin uninstall claude-daily@claude-daily
+/plugin uninstall retro-daily@retro-daily
 ```
 
-This also clears `~/.claude/plugins/data/claude-daily-claude-daily/`. Pass `--keep-data` to preserve the metrics store across reinstalls.
+This also clears `~/.claude/plugins/data/retro-daily-retro-daily/`. Pass `--keep-data` to preserve the metrics store across reinstalls.
 
 **Standalone install:**
 
@@ -270,3 +273,7 @@ Then remove the `SessionStart` hook entry from `~/.claude/settings.json`.
 ```
                   [ press any key to continue ]
 ```
+
+---
+
+<sub>"Claude" and "Claude Code" are trademarks of Anthropic, PBC. This project is not affiliated with, endorsed by, or sponsored by Anthropic.</sub>

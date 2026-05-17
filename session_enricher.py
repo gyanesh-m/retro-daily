@@ -5,7 +5,7 @@ Phase C of the modernization replaced the embedding-based topic classifier
 with weekly LLM-driven session tagging (see tag-sessions-runner.sh). This
 module is now thin:
 
-  - load_session_tags()       — read $CLAUDE_DAILY_DATA/session-tags.json
+  - load_session_tags()       — read $RETRO_DAILY_DATA/session-tags.json
   - extractive_summary(msgs)  — pick a few representative user messages
 
 The summary uses a longest-unique heuristic — no model dependency. The old
@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-DATA_DIR = Path(os.environ.get("CLAUDE_DAILY_DATA") or (Path.home() / ".claude" / "metrics"))
+DATA_DIR = Path(os.environ.get("RETRO_DAILY_DATA") or (Path.home() / ".claude" / "metrics"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 SESSION_TAGS_FILE = DATA_DIR / "session-tags.json"
 

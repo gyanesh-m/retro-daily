@@ -1,7 +1,7 @@
 /* ============================================================
-   claude-daily landing page — CRT terminal aesthetic
+   retro-daily landing page — CRT terminal aesthetic
    Page tells a story: prompt → user types `claude` → Claude
-   welcome screen → claude-daily SessionStart hook output.
+   welcome screen → retro-daily SessionStart hook output.
    ============================================================ */
 
 :root {

@@ -4,7 +4,7 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-RESULTS_FILE="$CLAUDE_DAILY_DATA/scout-results.json"
+RESULTS_FILE="$RETRO_DAILY_DATA/scout-results.json"
 
 [ -f "$RESULTS_FILE" ] || exit 0
 
@@ -12,11 +12,11 @@ RESULTS_FILE="$CLAUDE_DAILY_DATA/scout-results.json"
 # is kept for historical compatibility but no longer gates display.
 
 # Render findings using the same ANSI / typography vocabulary as generate-metrics.py
-CLAUDE_DAILY_DATA="$CLAUDE_DAILY_DATA" python3 <<'PYEOF'
+RETRO_DAILY_DATA="$RETRO_DAILY_DATA" python3 <<'PYEOF'
 import json, os, re
 from pathlib import Path
 
-RESULTS_FILE = Path(os.environ["CLAUDE_DAILY_DATA"]) / "scout-results.json"
+RESULTS_FILE = Path(os.environ["RETRO_DAILY_DATA"]) / "scout-results.json"
 data = json.load(open(RESULTS_FILE))
 
 def _c(code): return f"\033[{code}m"

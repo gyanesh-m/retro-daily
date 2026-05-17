@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claude-daily installer — copies scripts to ~/.claude/metrics/ and registers the SessionStart hook.
+# retro-daily installer — copies scripts to ~/.claude/metrics/ and registers the SessionStart hook.
 set -euo pipefail
 
 DEST="${HOME}/.claude/metrics"
@@ -12,7 +12,7 @@ info() { printf "  • %s\n" "$1"; }
 ok()   { printf "  \033[32m✓\033[0m %s\n" "$1"; }
 warn() { printf "  \033[33m!\033[0m %s\n" "$1"; }
 
-bold "claude-daily installer"
+bold "retro-daily installer"
 
 # 1. Source check — installer must run from a clone, or via curl-pipe with a known set of files.
 FILES=(_paths.sh startup.sh daily-insights.sh generate-metrics.py metric_advisor.py
@@ -22,7 +22,7 @@ FILES=(_paths.sh startup.sh daily-insights.sh generate-metrics.py metric_advisor
        setup-venv.sh requirements.txt)
 
 if [[ ! -f "${SCRIPT_DIR}/startup.sh" ]]; then
-  warn "Run from a cloned repo: git clone https://github.com/gyanesh-m/claude-daily.git && cd claude-daily && ./install.sh"
+  warn "Run from a cloned repo: git clone https://github.com/gyanesh-m/retro-daily.git && cd retro-daily && ./install.sh"
   exit 1
 fi
 
@@ -36,7 +36,7 @@ ok "Copied ${#FILES[@]} files to ${DEST}"
 
 # 3. Bootstrap the Python venv (idempotent — skips if deps already resolve).
 if command -v python3 >/dev/null 2>&1; then
-  CLAUDE_DAILY_HOME="${DEST}" CLAUDE_DAILY_DATA="${DEST}" \
+  RETRO_DAILY_HOME="${DEST}" RETRO_DAILY_DATA="${DEST}" \
     bash "${DEST}/setup-venv.sh" || warn "venv setup failed — embedding classification will be disabled until you run setup-venv.sh manually"
 else
   warn "python3 not found on PATH — install python3 then run: bash ${DEST}/setup-venv.sh"

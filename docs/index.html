@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>claude-daily — retro analytics for Claude Code</title>
+  <title>retro-daily — retro analytics for Claude Code</title>
   <meta name="description" content="A daily dashboard for your Claude Code sessions. Renders at the top of every session via a SessionStart hook." />
-  <meta property="og:title" content="claude-daily" />
+  <meta property="og:title" content="retro-daily" />
   <meta property="og:description" content="Retro analytics dashboard for Claude Code sessions." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,7 +28,7 @@
         <span class="tl-dot tl-red"></span>
         <span class="tl-dot tl-yellow"></span>
         <span class="tl-dot tl-green"></span>
-        <span class="tl-title">~/dev/github.com/gyanesh-m/claude-daily — claude — 120×40</span>
+        <span class="tl-title">~/dev/github.com/gyanesh-m/retro-daily — claude — 120×40</span>
       </header>
 
       <!-- Terminal body -->
@@ -38,7 +38,7 @@
              Format: <arrow> <dir> git:(<branch>) <typed cmd>           -->
         <div class="line prompt-line">
           <span class="ps1-arrow"><span class="a1">❯</span><span class="a2">→</span></span>
-          <span class="ps1-path">claude-daily</span>
+          <span class="ps1-path">retro-daily</span>
           <span class="ps1-git">git:(<span class="ps1-branch">main</span>)</span>
           <span class="ps1-mark">❯</span>
           <span class="typed" id="typed-cmd"></span>
@@ -97,7 +97,7 @@
               <span class="dim">v2.1.143</span>
             </div>
             <div class="wl-model dim">Sonnet 4.6 with high effort · Claude Max</div>
-            <div class="wl-cwd dim">~/dev/github.com/gyanesh-m/claude-daily</div>
+            <div class="wl-cwd dim">~/dev/github.com/gyanesh-m/retro-daily</div>
           </div>
         </div>
 
@@ -129,7 +129,7 @@
         <div class="sb-left">
           <span class="sb-model">sonnet high</span>
           <span class="sb-sep">·</span>
-          <span class="sb-path">claude-daily</span>
+          <span class="sb-path">retro-daily</span>
           <span class="sb-sep">·</span>
           <span class="sb-branch">main 🌿</span>
           <span class="sb-sep">·</span>
@@ -147,7 +147,7 @@
       <h2 class="page-h2">What you just saw</h2>
       <p class="lede dim">
         Everything inside the terminal above is the actual output of the
-        <code>SessionStart</code> hook — what claude-daily prints every time
+        <code>SessionStart</code> hook — what retro-daily prints every time
         you start a new Claude Code session. The numbers shown are sample
         data drawn from the author's own session history; your dashboard
         renders from your own <code>~/.claude/projects/*.jsonl</code>.
@@ -164,7 +164,7 @@
         <!-- Inline SVG: ~5KB on the wire, pure CSS keyframes drive the
              animation. No new JS dependencies. Loops every 7.5s.            -->
         <svg class="flow" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg"
-             role="img" aria-label="claude-daily SessionStart flow diagram">
+             role="img" aria-label="retro-daily SessionStart flow diagram">
 
           <!-- Vertical timeline trunk -->
           <line x1="80" y1="40" x2="80" y2="340" class="trunk"/>
@@ -216,7 +216,7 @@
           The dashboard never blocks on network — <code>scout</code> and
           <code>tag-sessions</code> spawn detached <code>claude -p</code>
           workers via <code>nohup</code>. Their JSON outputs land in
-          <code>$CLAUDE_DAILY_DATA</code> and are picked up by the next session.
+          <code>$RETRO_DAILY_DATA</code> and are picked up by the next session.
         </figcaption>
       </figure>
     </section>
@@ -225,24 +225,24 @@
       <h2 class="page-h2">Install</h2>
       <p class="dim">Inside Claude Code:</p>
       <pre class="codeblock">
-<span class="dim">$</span> /plugin marketplace add gyanesh-m/claude-daily
-<span class="dim">$</span> /plugin install claude-daily@claude-daily
+<span class="dim">$</span> /plugin marketplace add gyanesh-m/retro-daily
+<span class="dim">$</span> /plugin install retro-daily@retro-daily
 <span class="dim">$</span> /reload-plugins</pre>
       <p class="dim">Or standalone:</p>
       <pre class="codeblock">
-<span class="dim">$</span> git clone https://github.com/gyanesh-m/claude-daily.git
-<span class="dim">$</span> cd claude-daily && ./install.sh</pre>
+<span class="dim">$</span> git clone https://github.com/gyanesh-m/retro-daily.git
+<span class="dim">$</span> cd retro-daily && ./install.sh</pre>
       <div class="cta">
-        <a class="btn" href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">view on github</a>
-        <a class="btn ghost" href="https://github.com/gyanesh-m/claude-daily/pull/1" target="_blank" rel="noopener">pr #1</a>
+        <a class="btn" href="https://github.com/gyanesh-m/retro-daily" target="_blank" rel="noopener">view on github</a>
+        <a class="btn ghost" href="https://github.com/gyanesh-m/retro-daily/issues/new" target="_blank" rel="noopener">report issue</a>
       </div>
     </section>
 
     <footer class="footer">
       <p class="dim small">
-        <a href="https://github.com/gyanesh-m/claude-daily" target="_blank" rel="noopener">github</a> ·
-        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/README.md" target="_blank" rel="noopener">readme</a> ·
-        <a href="https://github.com/gyanesh-m/claude-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">eval set</a>
+        <a href="https://github.com/gyanesh-m/retro-daily" target="_blank" rel="noopener">github</a> ·
+        <a href="https://github.com/gyanesh-m/retro-daily/blob/main/README.md" target="_blank" rel="noopener">readme</a> ·
+        <a href="https://github.com/gyanesh-m/retro-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">eval set</a>
       </p>
       <p class="ascii small dim">[ press any key to continue ]</p>
     </footer>

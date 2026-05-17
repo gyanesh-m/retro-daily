@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# setup-venv.sh — create $CLAUDE_DAILY_DATA/.venv and install Python deps.
+# setup-venv.sh — create $RETRO_DAILY_DATA/.venv and install Python deps.
 # Idempotent: if the venv already has all requirements, it does nothing.
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
-VENV="$CLAUDE_DAILY_DATA/.venv"
-REQS="$CLAUDE_DAILY_HOME/requirements.txt"
+VENV="$RETRO_DAILY_DATA/.venv"
+REQS="$RETRO_DAILY_HOME/requirements.txt"
 
 if [[ ! -f "$REQS" ]]; then
   echo "setup-venv: requirements.txt not found at $REQS" >&2
