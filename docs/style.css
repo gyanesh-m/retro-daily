@@ -1031,18 +1031,6 @@ body {
   font-size: 13px;
   white-space: pre-wrap;
   overflow-x: auto;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-/* Easter-egg highlight: pulses the install codeblock after the
-   user triggers the "press any key" prompt. See setupEasterEgg() in
-   docs/app.js for the trigger logic.                               */
-.codeblock.flash {
-  animation: codeblock-flash 1.8s ease-out;
-}
-@keyframes codeblock-flash {
-  0%   { border-color: var(--rule);        box-shadow: none; }
-  20%  { border-color: var(--cyan-bright); box-shadow: 0 0 22px rgba(56, 212, 255, 0.45); }
-  100% { border-color: var(--rule);        box-shadow: none; }
 }
 
 /* Interactive "press any key" prompt */
@@ -1056,6 +1044,68 @@ body {
   color: var(--cyan-bright);
   text-shadow: var(--glow);
   outline: none;
+}
+/* Easter-egg target: glows the whole install body — codeblocks,
+   captions, and the CTA buttons row. See setupEasterEgg() in
+   docs/app.js for the trigger logic. The box-shadow is layered
+   (tight + medium + wide blur) so the glow fades into the page
+   background instead of reading as a hard cyan rectangle.        */
+.install-body {
+  padding: 18px 22px;
+  border-radius: 14px;
+}
+.install-body.flash {
+  animation: install-body-flash 1.8s ease-out;
+}
+@keyframes install-body-flash {
+  0% {
+    box-shadow:
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0);
+  }
+  20% {
+    box-shadow:
+      0 0 14px 0    rgba(56, 212, 255, 0.55),
+      0 0 42px 6px  rgba(56, 212, 255, 0.28),
+      0 0 96px 18px rgba(56, 212, 255, 0.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0);
+  }
+}
+@media (max-width: 720px) {
+  /* Tighter padding + smaller blurs so the halo stays proportional
+     to the narrower viewport. The page already pads at 20px on each
+     side; another 22px inside would leave too little room for the
+     codeblocks. */
+  .install-body {
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+  @keyframes install-body-flash {
+    0% {
+      box-shadow:
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0);
+    }
+    20% {
+      box-shadow:
+        0 0 10px 0    rgba(56, 212, 255, 0.55),
+        0 0 28px 4px  rgba(56, 212, 255, 0.26),
+        0 0 64px 12px rgba(56, 212, 255, 0.12);
+    }
+    100% {
+      box-shadow:
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0);
+    }
+  }
 }
 
 .cta {
