@@ -49,41 +49,50 @@
              No box — a coral sprite on the left, 3 lines of label on the right. -->
         <div class="welcome stage" id="welcome">
           <div class="welcome-sprite" aria-hidden="true">
-            <!-- Claude Code mascot — coral blob, 16x12 grid, 4px per pixel.
-                 Matches the in-CLI sprite: rounded top, flat bottom,
-                 two small square eyes, no smile.                          -->
+            <!-- Coral pixel mascot — original art, 16x12 grid, 4px per pixel.
+                 Symmetric rounded blob, two small dark eyes with highlights,
+                 top light-stripe + bottom shadow for depth. Base color is
+                 Anthropic's coral hex (#D97757); colors aren't trademarkable
+                 and the shape is deliberately distinct from the official
+                 Claude Code icon.                                          -->
             <svg viewBox="0 0 64 48" width="64" height="48" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-              <!-- Body fill (coral) -->
-              <g fill="#e8826a">
-                <!-- row 1 (narrow top)   -->
-                <rect x="16" y="4"  width="32" height="4"/>
-                <!-- row 2 (wider)        -->
-                <rect x="8"  y="8"  width="48" height="4"/>
-                <!-- main body            -->
-                <rect x="4"  y="12" width="56" height="24"/>
-                <!-- row n-2 (wider)      -->
-                <rect x="8"  y="36" width="48" height="4"/>
-                <!-- row n-1 (narrow)     -->
-                <rect x="12" y="40" width="40" height="4"/>
+              <!-- Base body fill (Anthropic coral) -->
+              <g fill="#D97757">
+                <!-- row 0: 6 cells wide (narrow top)  -->
+                <rect x="16" y="0"  width="32" height="4"/>
+                <!-- row 1: 12 wide                    -->
+                <rect x="8"  y="4"  width="48" height="4"/>
+                <!-- row 2: 14 wide                    -->
+                <rect x="4"  y="8"  width="56" height="4"/>
+                <!-- rows 3-8: full 16 wide            -->
+                <rect x="0"  y="12" width="64" height="24"/>
+                <!-- row 9: 14 wide                    -->
+                <rect x="4"  y="36" width="56" height="4"/>
+                <!-- row 10: 12 wide                   -->
+                <rect x="8"  y="40" width="48" height="4"/>
+                <!-- row 11: 8 wide (narrow bottom)    -->
+                <rect x="16" y="44" width="32" height="4"/>
               </g>
-              <!-- Darker rim along the bottom + lower sides -->
-              <g fill="#c95a48">
-                <rect x="4"  y="32" width="4"  height="4"/>
-                <rect x="56" y="32" width="4"  height="4"/>
-                <rect x="8"  y="36" width="4"  height="4"/>
-                <rect x="52" y="36" width="4"  height="4"/>
-                <rect x="12" y="40" width="4"  height="4"/>
-                <rect x="48" y="40" width="4"  height="4"/>
+              <!-- Top highlight (lighter coral) -->
+              <g fill="#E89478">
+                <rect x="20" y="2"  width="24" height="2"/>
+                <rect x="12" y="6"  width="40" height="2"/>
               </g>
-              <!-- Top-edge highlight stripe -->
-              <g fill="#f6a98e">
-                <rect x="20" y="6"  width="24" height="2"/>
-                <rect x="12" y="10" width="40" height="2"/>
+              <!-- Bottom shadow (darker coral) -->
+              <g fill="#B85A45">
+                <rect x="8"  y="38" width="48" height="2"/>
+                <rect x="12" y="42" width="40" height="2"/>
+                <rect x="16" y="46" width="32" height="2"/>
               </g>
-              <!-- Eyes — two small dark squares, no smile -->
-              <g fill="#2a1208">
-                <rect x="20" y="20" width="6" height="6"/>
-                <rect x="38" y="20" width="6" height="6"/>
+              <!-- Eyes — 2x2 cells, dark brown, set well apart -->
+              <g fill="#1A0A04">
+                <rect x="16" y="20" width="8" height="8"/>
+                <rect x="40" y="20" width="8" height="8"/>
+              </g>
+              <!-- Eye highlights — 1 cell, upper-left of each pupil -->
+              <g fill="#FCE5D6">
+                <rect x="18" y="22" width="2" height="2"/>
+                <rect x="42" y="22" width="2" height="2"/>
               </g>
             </svg>
           </div>
