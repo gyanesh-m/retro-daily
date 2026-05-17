@@ -162,7 +162,7 @@ Session tags are surfaced as the `topics` and `interaction_types` fields per day
 
 Every new Claude Code session fires the `SessionStart` hook, which calls `startup.sh`. That script runs four steps sequentially; two of them (`scout`, `tag-sessions`) spawn detached `claude -p` background workers and return immediately, so the rest of the dashboard renders without waiting on network or LLM calls.
 
-![SessionStart flow diagram](docs/screenshots/flow-diagram.png)
+![SessionStart flow diagram — accumulate-and-dim cascade with trunk drawing down to each step](docs/screenshots/flow-diagram.gif)
 
 ```mermaid
 sequenceDiagram
