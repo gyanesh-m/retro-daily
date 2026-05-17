@@ -1,6 +1,6 @@
-# retro-daily
+# Retro Daily
 
-> a daily retro for your claude code sessions
+> A daily retro for your Claude Code sessions
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/code) [![Live demo](https://img.shields.io/badge/live%20demo-→-2a6e69)](https://gyanesh-m.github.io/retro-daily/) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gyanesh-m/retro-daily/pulls)
 
