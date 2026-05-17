@@ -1,21 +1,6 @@
-```
-  d8888b. d88888b d888888b d8888b.  .d88b.
-  88  `8D 88'     `~~88~~' 88  `8D .8P  Y8.
-  88oobY' 88ooooo    88    88oobY' 88    88
-  88`8b   88~~~~~    88    88`8b   88    88
-  88 `88. 88.        88    88 `88. `8b  d8'
-  88   YD Y88888P    YP    88   YD  `Y88P'
+# retro-daily
 
-  d8888b.  .d8b.  d888888b db      db    db
-  88  `8D d8' `8b   `88'   88      `8b  d8'
-  88   88 88ooo88    88    88       `8bd8'
-  88   88 88~~~88    88    88         88
-  88  .8D 88   88   .88.   88booo.    88
-  Y8888D' YP   YP Y888888P Y88888P    YP            [v0.1]
-
-      ════════════════════════════════════════════
-       a daily retro for your claude code sessions
-```
+> a daily retro for your claude code sessions
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/code) [![Live demo](https://img.shields.io/badge/live%20demo-→-2a6e69)](https://gyanesh-m.github.io/retro-daily/) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gyanesh-m/retro-daily/pulls)
 
