@@ -244,6 +244,23 @@ Default `$RETRO_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${CL
 
 **Cadence implication.** Tag results lag by up to 7 days. A session created today won't have a topic in the dashboard until the next weekly tagging run — it'll show up under `topics: untagged` in `metrics-store.json` and the corresponding dashboard line. Force an immediate run with `TAG_FORCE=1 bash tag-sessions.sh` if you want to backfill.
 
+### Security model for background workers
+
+Both `scout-runner.sh` and `tag-sessions-runner.sh` spawn `claude -p` to do real work (WebSearch / Read+Write to `/tmp`). Without intervention, third-party `PreToolUse` hooks installed at the user level — like [Sage](https://github.com/gendigitalinc/sage) — return `"ask"` against any unattended session and kill `claude -p` with `terminal_reason=hook_stopped` before any work happens.
+
+Rather than bypass those hooks with `--dangerously-skip-permissions` (which would silently disable the user's chosen security tooling), the runners wrap each `claude -p` invocation in Claude Code's **OS-level sandbox** (`sandbox-exec` on macOS, `bubblewrap` on Linux). The sandbox config passed via `--settings`:
+
+| Worker | Filesystem writes | Network |
+|---|---|---|
+| `scout-runner.sh` | `/tmp` only (denies `/Users`, `/etc`, `/usr`, `/var`, `/Library`, `/Applications`) | all domains allowed (WebSearch needs internet) |
+| `tag-sessions-runner.sh` | `/tmp` only (same denylist) | all domains denied |
+
+`failIfUnavailable: true` means if the OS sandbox can't be set up, the worker fails loudly rather than silently running unsandboxed. On supported systems, this is meaningfully safer than the alternative — even if a prompt-injected response tries to write to `~/.ssh/authorized_keys` or curl-pipe a shell, the kernel refuses.
+
+**Why this works alongside Sage.** The sandbox is enforced by the OS at the syscall level, before any hook fires. Once `claude -p` is wrapped, Sage's `PreToolUse` either doesn't run (sandboxed sessions are exempt in some configurations) or runs but its verdict is moot — the sandbox is already the safety floor. Empirically, sandboxed scout runs complete cleanly with `terminal_reason=completed` and no hook interference.
+
+**Opt out entirely.** If you'd rather not have retro-daily spawn unattended Claude sessions at all — even sandboxed — set `RETRO_DAILY_NO_BACKGROUND_WORKERS=1` in your environment. The dashboard still renders (totals, competency, efficiency, contributions heatmap, focus areas); only scout findings and session tags are skipped. You'll see `[scout] skipped — RETRO_DAILY_NO_BACKGROUND_WORKERS=1` in the hook output instead.
+
 ## Files
 
 | File | Role |

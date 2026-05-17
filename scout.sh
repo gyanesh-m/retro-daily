@@ -4,6 +4,15 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
+# Global opt-out: skip all background `claude -p` workers (scout + tag-sessions).
+# Useful if the user doesn't want retro-daily spawning unattended Claude sessions
+# at all, regardless of sandboxing — dashboard still renders, just without
+# scout findings or session tags.
+if [ "${RETRO_DAILY_NO_BACKGROUND_WORKERS:-0}" = "1" ]; then
+  echo "[scout] skipped — RETRO_DAILY_NO_BACKGROUND_WORKERS=1"
+  exit 0
+fi
+
 QUERIES_FILE="$RETRO_DAILY_DATA/scout-queries.json"
 HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
 RUNNER="$RETRO_DAILY_HOME/scout-runner.sh"

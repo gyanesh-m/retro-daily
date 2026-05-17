@@ -121,24 +121,56 @@ PROMPT_EOF
 # Do NOT use --bare: it disables OAuth/keychain auth and requires
 # ANTHROPIC_API_KEY.
 export CLAUDE_CODE_DISABLE_SESSION_START_HOOK=1
-log "invoking claude -p (WebSearch+Write only)"
-# --setting-sources project skips ~/.claude/settings.json + its enabled
-# plugins — critical when the user has third-party plugins like Sage that
-# install PreToolUse hooks. Those hooks return "ask" against unattended
-# sessions and kill claude -p with terminal_reason=hook_stopped before any
-# WebSearch fires. Loading project-only settings means the worker session
-# sees no user-installed hooks. Pair with --dangerously-skip-permissions to
-# also bypass Claude's own permission machinery.
-CLAUDE_OUT=$(claude -p \
+log "invoking claude -p (sandboxed; WebSearch+Write only)"
+# Run claude -p inside Claude Code's OS-level sandbox (sandbox-exec on
+# macOS, bubblewrap on Linux) so the worker is contained by the OS
+# regardless of which plugins are loaded. The sandbox restricts the
+# worker to:
+#   - Filesystem writes:  /tmp only (everything else denied)
+#   - Filesystem reads:   default (Claude Code's allowRead)
+#   - Network:            all domains allowed (WebSearch needs internet)
+#
+# With sandbox in place, we do NOT need --dangerously-skip-permissions.
+# The sandbox itself is the safety net — anything that tries to write
+# outside /tmp, mutate user files, or spawn a shell escape is blocked
+# by the OS before any hook can even ask. This is meaningfully safer
+# than the previous --dangerously-skip-permissions approach.
+#
+# failIfUnavailable=true: if the OS sandbox can't be set up, the
+# worker FAILS rather than silently running unsandboxed. Users on
+# systems without sandbox support can opt out of background workers
+# entirely via RETRO_DAILY_NO_BACKGROUND_WORKERS=1.
+SANDBOX_CFG='{"sandbox":{"enabled":true,"failIfUnavailable":true,"autoAllowBashIfSandboxed":true,"filesystem":{"allowWrite":["/tmp"],"denyWrite":["/Users","/etc","/usr","/var","/Library","/Applications"]},"network":{"allowedDomains":["*"]}}}'
+
+# Defense in depth:
+#   1. Sandbox (--settings)             : OS-level kernel enforcement.
+#   2. --setting-sources project        : skip ~/.claude/settings.json so
+#                                         user-installed PreToolUse hooks
+#                                         (e.g. Sage) don't fire and kill
+#                                         the unattended session with
+#                                         terminal_reason=hook_stopped.
+#   3. cd $(mktemp -d) before invoking  : neutral cwd so project-level
+#                                         .claude/settings.json (if any)
+#                                         also doesn't load — important
+#                                         for users who install Sage at
+#                                         project scope.
+WORKER_CWD=$(mktemp -d)
+# Replace the earlier EXIT trap with one that cleans up BOTH the lock
+# and the worker cwd. (bash only keeps the most recent EXIT trap.)
+trap 'rm -f "$LOCK"; rmdir "$WORKER_CWD" 2>/dev/null || true' EXIT
+
+CLAUDE_OUT=$(cd "$WORKER_CWD" && claude -p \
   --setting-sources project \
-  --dangerously-skip-permissions \
+  --settings "$SANDBOX_CFG" \
   --allowedTools "WebSearch Write" \
   --append-system-prompt "You are an unattended background scout worker. Only use WebSearch and Write. Write ONLY to $TMP_RESULTS. Be decisive; skip clarifying questions." \
-  "$PROMPT" 2>&1) || {
-    log "claude -p failed (exit $?). output follows:"
-    echo "$CLAUDE_OUT" | tail -40 >> "$LOG"
-    exit 1
-  }
+  "$PROMPT" 2>&1)
+CLAUDE_RC=$?
+if [ "$CLAUDE_RC" -ne 0 ]; then
+  log "claude -p failed (exit $CLAUDE_RC). output follows:"
+  echo "$CLAUDE_OUT" | tail -40 >> "$LOG"
+  exit 1
+fi
 
 log "claude -p completed. output (last 60 lines):"
 echo "$CLAUDE_OUT" | tail -60 >> "$LOG"
