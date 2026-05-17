@@ -706,26 +706,30 @@ body {
   opacity: 0;
   animation: trunk-draw 12s ease-in-out infinite;
 }
-/* Trunk is in lockstep with the step cascade:
+/* Trunk extends segment-by-segment ahead of each step's fire-time.
+   Each extension takes ~7% of the 12s loop (~840ms) and finishes
+   ~3% (~360ms) before the next step lights up, so the line visibly
+   grows down to the next node before that node powers on.
+
      1.5%   fades in at SessionStart (zero length, just origin)
-     17.5%  extends to step 2 (length 70)
-     34.5%  extends to step 3 (length 140)
-     51.5%  extends to step 4 (length 220)
-     67.5%  fully drawn at step 5 (length 300)
-     87.5%  holds at full
-     92%    fades out with the rest of the cascade
-     100%   dark until the loop restarts                                  */
+     8% – 15%   extends to step 2 (length 70)   — step 2 fires at 18%
+     25% – 32%  extends to step 3 (length 140)  — step 3 fires at 35%
+     42% – 49%  extends to step 4 (length 220)  — step 4 fires at 52%
+     58% – 65%  extends to step 5 (length 300)  — step 5 fires at 68%
+     65% – 87.5%  holds at full while dashboard renders is active
+     87.5% – 92%  fades out with the rest of the cascade
+     100%   dark until the loop restarts                                 */
 @keyframes trunk-draw {
   0%      { stroke-dashoffset: 300; opacity: 0; }
   1.5%    { stroke-dashoffset: 300; opacity: 0.45; }
-  16%     { stroke-dashoffset: 300; opacity: 0.45; }
-  17.5%   { stroke-dashoffset: 230; opacity: 0.45; }
-  33%     { stroke-dashoffset: 230; opacity: 0.45; }
-  34.5%   { stroke-dashoffset: 160; opacity: 0.45; }
-  50%     { stroke-dashoffset: 160; opacity: 0.45; }
-  51.5%   { stroke-dashoffset: 80;  opacity: 0.45; }
-  66%     { stroke-dashoffset: 80;  opacity: 0.45; }
-  67.5%   { stroke-dashoffset: 0;   opacity: 0.45; }
+  8%      { stroke-dashoffset: 300; opacity: 0.45; }
+  15%     { stroke-dashoffset: 230; opacity: 0.45; }
+  25%     { stroke-dashoffset: 230; opacity: 0.45; }
+  32%     { stroke-dashoffset: 160; opacity: 0.45; }
+  42%     { stroke-dashoffset: 160; opacity: 0.45; }
+  49%     { stroke-dashoffset: 80;  opacity: 0.45; }
+  58%     { stroke-dashoffset: 80;  opacity: 0.45; }
+  65%     { stroke-dashoffset: 0;   opacity: 0.45; }
   87.5%   { stroke-dashoffset: 0;   opacity: 0.45; }
   92%     { stroke-dashoffset: 0;   opacity: 0; }
   100%    { stroke-dashoffset: 300; opacity: 0; }
