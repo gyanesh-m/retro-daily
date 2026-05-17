@@ -67,10 +67,6 @@ S C O U T   F I N D I N G S
 
 ## Install
 
-> Pick **one** of the two methods. Running both registers the hook twice.
-
-### Option A — Claude Code plugin (recommended)
-
 Inside Claude Code:
 
 ```
@@ -87,56 +83,15 @@ Test against a local clone before publishing:
 claude --plugin-dir ./retro-daily
 ```
 
-### Option B — standalone script
-
-```sh
-git clone https://github.com/gyanesh-m/retro-daily.git
-cd retro-daily && ./install.sh
-```
-
-Copies scripts to `~/.claude/metrics/`, marks them executable, and merges a `SessionStart` hook into `~/.claude/settings.json` via `jq` (idempotent; falls back to printing the JSON to paste manually if `jq` is missing).
-
-Open a new Claude Code session — the dashboard renders.
-
-### Migrating from standalone to plugin
-
-If you started with Option B and want to switch to Option A, both `SessionStart` hooks will fire (the one in `~/.claude/settings.json` *and* the plugin's own hook from `hooks/hooks.json`) until you remove the standalone entry. The dashboard renders twice, the metrics get written to two different data dirs, and on Claude Code v2.1.x the visible terminal output gets confused. To migrate cleanly:
-
-```sh
-# 1. Back up the standalone scripts + data
-BACKUP="$HOME/.claude/metrics-backup-$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$BACKUP"
-cd "$HOME/.claude/metrics"
-for f in startup.sh daily-insights.sh scout.sh scout-runner.sh \
-         scout-review.sh scout-browse.sh tag-sessions.sh \
-         tag-sessions-runner.sh setup-venv.sh _paths.sh \
-         generate-metrics.py prompt_classifier.py metric_advisor.py \
-         session_enricher.py requirements.txt \
-         metrics-store.json analysis-history.json last-run-date.txt \
-         scout-queries.json scout-results.json session-tags.json \
-         scout.log tag-sessions.log; do
-  [ -e "$f" ] && mv "$f" "$BACKUP/"
-done
-for d in scout-archive session-tags-archive; do
-  [ -d "$d" ] && mv "$d" "$BACKUP/"
-done
-
-# 2. Remove the standalone SessionStart hook from settings.json
-jq '.hooks.SessionStart[0].hooks |= map(select(.command | contains("metrics/startup.sh") | not))' \
-   ~/.claude/settings.json > /tmp/settings.new && mv /tmp/settings.new ~/.claude/settings.json
-```
-
-The plugin's data dir (`~/.claude/plugins/data/retro-daily-retro-daily/`) regenerates from your `~/.claude/projects/*.jsonl` on the next session — no manual data migration needed.
-
 ## Paths
 
-The scripts resolve their layout from two env vars. Defaults preserve the legacy single-directory layout for standalone installs; the plugin's `hooks.json` overrides both for plugin installs.
+The scripts resolve their layout from two env vars. The plugin's `hooks.json` sets both at session start.
 
-| Env var | Standalone default | Plugin default |
-|---|---|---|
-| `RETRO_DAILY_HOME` | script's own directory | `${CLAUDE_PLUGIN_ROOT}` |
-| `RETRO_DAILY_DATA` | `~/.claude/metrics` | `${CLAUDE_PLUGIN_DATA}` |
-| `RETRO_DAILY_PLAN_LABEL` | unset → generic footer | unset → generic footer |
+| Env var | Default |
+|---|---|
+| `RETRO_DAILY_HOME` | `${CLAUDE_PLUGIN_ROOT}` |
+| `RETRO_DAILY_DATA` | `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/retro-daily-retro-daily/`) |
+| `RETRO_DAILY_PLAN_LABEL` | unset → generic footer |
 
 Set `RETRO_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"API"`, etc.) if you want the cost footer to name your plan. Claude Code does not expose the active subscription tier programmatically, so this can't be auto-detected.
 
@@ -144,17 +99,12 @@ Set `RETRO_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"A
 
 - `python3` (3.9+) — required
 - `claude` CLI on `$PATH` — required for the scout background worker
-- `jq` — only for the standalone installer's `settings.json` merge
 
 ### Python dependencies
 
 The prompt classifier uses `sentence-transformers` (~90MB MiniLM, required for topic similarity) and optionally `transformers` + `sentencepiece` (~500MB DeBERTa NLI, fallback for reactions that don't match any lexical cue). On the synthetic eval, lexical cues alone classify 49/50 cases correctly — NLI is insurance, not the primary path.
 
-These are installed into a venv at `${RETRO_DAILY_DATA}/.venv` so they don't pollute system Python.
-
-**Standalone install** runs `setup-venv.sh` automatically — first run downloads ~600MB of model deps.
-
-**Plugin install** does not auto-bootstrap (plugin install paths are read-only at install time). After `/plugin install`, run once:
+These are installed into a venv at `${RETRO_DAILY_DATA}/.venv` so they don't pollute system Python. Plugin install paths are read-only at install time, so the venv isn't auto-bootstrapped. After `/plugin install`, run once:
 
 ```sh
 bash ~/.claude/plugins/cache/<marketplace>/<plugin>/setup-venv.sh
@@ -168,7 +118,7 @@ RETRO_DAILY_DATA=~/.claude/plugins/data/retro-daily-retro-daily \
   bash ./retro-daily/setup-venv.sh
 ```
 
-The dashboard renders even without the venv — only the embedding-driven prompt outcome classification (APPROVAL / REFINEMENT / CORRECTION) is skipped.
+First run downloads ~600MB of model deps. The dashboard renders even without the venv — only the embedding-driven prompt outcome classification (APPROVAL / REFINEMENT / CORRECTION) is skipped.
 
 ## How classification works
 
@@ -258,7 +208,7 @@ flowchart LR
 
 ### State files under `$RETRO_DAILY_DATA/`
 
-Default `$RETRO_DAILY_DATA` is `~/.claude/metrics` (standalone install) or `${CLAUDE_PLUGIN_DATA}` (plugin install).
+`$RETRO_DAILY_DATA` defaults to `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/retro-daily-retro-daily/`).
 
 | File | Writer | Cadence | Purpose |
 |---|---|---|---|
@@ -306,7 +256,7 @@ Rather than bypass those hooks with `--dangerously-skip-permissions` (which woul
 | `tag-sessions.sh` + `tag-sessions-runner.sh` | weekly LLM session tagger |
 | `tests/eval.json` + `tests/eval_classifier.py` + `tests/sample_pairs.py` | classifier regression test |
 | `_paths.sh` | shared `RETRO_DAILY_HOME` / `RETRO_DAILY_DATA` resolution |
-| `install.sh` + `setup-venv.sh` + `requirements.txt` | standalone installer + Python venv bootstrap |
+| `setup-venv.sh` + `requirements.txt` | Python venv bootstrap |
 | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` + `hooks/hooks.json` | plugin packaging |
 | `LICENSE` | MIT, applies to all repo content |
 | `docs/index.html` + `docs/app.js` + `docs/style.css` + `docs/screenshots/*` | GitHub Pages landing page (animated CRT demo) |
@@ -320,24 +270,6 @@ Rather than bypass those hooks with `--dangerously-skip-permissions` (which woul
 ```
 
 This also clears `~/.claude/plugins/data/retro-daily-retro-daily/`. Pass `--keep-data` to preserve the metrics store across reinstalls.
-
-**Standalone install:** remove only the files retro-daily wrote — `~/.claude/metrics/` may contain other things you care about (your own venv, scripts, notes), so don't `rm -rf` the whole directory.
-
-```sh
-cd ~/.claude/metrics
-rm -f startup.sh daily-insights.sh scout.sh scout-runner.sh scout-review.sh \
-      scout-browse.sh tag-sessions.sh tag-sessions-runner.sh setup-venv.sh \
-      _paths.sh generate-metrics.py prompt_classifier.py metric_advisor.py \
-      session_enricher.py requirements.txt \
-      metrics-store.json analysis-history.json last-run-date.txt \
-      scout-queries.json scout-results.json session-tags.json \
-      scout.log tag-sessions.log
-rm -rf scout-archive session-tags-archive .venv
-
-# Remove the standalone SessionStart hook from settings.json
-jq '.hooks.SessionStart[0].hooks |= map(select(.command | contains("metrics/startup.sh") | not))' \
-   ~/.claude/settings.json > /tmp/settings.new && mv /tmp/settings.new ~/.claude/settings.json
-```
 
 ## Compatibility notes
 
@@ -360,8 +292,7 @@ If you don't see the dashboard at the top of a fresh session: `tail /tmp/claude-
 The scout-runner background worker spawned but never wrote results. Diagnose:
 
 ```sh
-tail ~/.claude/plugins/data/retro-daily-retro-daily/scout.log     # plugin install
-tail ~/.claude/metrics/scout.log                                  # standalone
+tail ~/.claude/plugins/data/retro-daily-retro-daily/scout.log
 ```
 
 Look for `WARNING: temp results file was not written`. The usual cause is a third-party `PreToolUse` hook (e.g. Sage) returning `"ask"` against the unattended worker — see [Security model](#security-model-for-background-workers) for how the sandbox + `--setting-sources project` combo handles this. If `RETRO_DAILY_NO_BACKGROUND_WORKERS=1` is set, scout is intentionally skipped.
@@ -375,10 +306,6 @@ Most likely: plain stdout went to `additionalContext` (LLM-visible only) on v2.1
 ```
 
 Also check `/tmp/claude-startup.log` — if the dashboard rendered there but not in the terminal, your plugin version is missing the JSON-envelope fix.
-
-### Two dashboards rendering on every session start
-
-You have both the standalone install AND the plugin install registered. See [Migrating from standalone to plugin](#migrating-from-standalone-to-plugin).
 
 ### Worker fails with `sandbox unavailable`
 
