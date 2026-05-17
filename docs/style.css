@@ -69,13 +69,16 @@ body {
     rgba(0, 0, 0, 0.55) 100%);
 }
 .flicker {
-  background: rgba(255, 255, 255, 0.012);
-  animation: flicker 0.18s steps(1) infinite alternate;
+  background: rgba(255, 255, 255, 0.008);
+  animation: flicker 4.5s ease-in-out infinite alternate;
 }
+/* Slow, almost-imperceptible breathe instead of a fast stepped strobe.
+   Previously 0.18s steps(1) with 0.4↔0.7 opacity range — jarring on
+   any monitor. Now a 4.5s ease-in-out cycle with a tiny opacity delta
+   (0.42↔0.55) keeps the CRT presence without the strobe.            */
 @keyframes flicker {
-  0%   { opacity: 0.4; }
-  50%  { opacity: 0.7; }
-  100% { opacity: 0.5; }
+  0%   { opacity: 0.42; }
+  100% { opacity: 0.55; }
 }
 
 /* ============================================================
