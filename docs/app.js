@@ -17,6 +17,15 @@
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const sleep = (ms) => new Promise(r => setTimeout(r, REDUCED ? 0 : ms));
 
+  // ----- "Today" computed at page-load so the demo never reads as stale.
+  // Format mirrors what generate-metrics.py prints: e.g. "Sun May 17".
+  const _now = new Date();
+  const TODAY_LABEL = _now.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: '2-digit',
+  }).replace(',', '');
+  // Scout runs on a weekly cadence; show a recent-but-plausibly-aged run.
+  const SCOUT_DATE = new Date(_now.getTime() - 2 * 86400000).toISOString().slice(0, 10);
+
   // ============================================================
   // Helpers
   // ============================================================
@@ -66,7 +75,7 @@
   // ============================================================
 
   const META = {
-    date: 'Mon May 04',
+    date: TODAY_LABEL,
     sessions: 1197, tools: 10626, days: 21, projects: 15, costAll: '$6436.49',
     tokens: { in: '239.0K', out: '10.6M', cacheRead: '1.82B', cacheWrite: '127.2M' },
     week: { sessions: 10, tools: 632, days: 3, projects: 4, cost: '$1040.15' },
@@ -257,13 +266,13 @@
       out.push(`      ${green('→')} ${dim(f.rec)}`);
     }
     out.push('');
-    out.push(`  ${dim('scout queued · last run 2026-05-04')}`);
+    out.push(`  ${dim('scout queued · last run ' + SCOUT_DATE)}`);
     out.push('');
 
     // --- SCOUT FINDINGS ----------------------------------------------------
     out.push(head('S C O U T   F I N D I N G S'));
     out.push(ruleC(RULE));
-    out.push(`  ${dim('6 queries · 2026-05-04 · full detail: ' + dim('~/.claude/metrics/scout-results.json'))}`);
+    out.push(`  ${dim('6 queries · ' + SCOUT_DATE + ' · full detail: ' + dim('~/.claude/metrics/scout-results.json'))}`);
     out.push('');
     for (const s of META.scout) {
       out.push(`  ${yellow('●')} ${white(bold(s.q))}`);
