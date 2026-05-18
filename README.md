@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/code) [![Live demo](https://img.shields.io/badge/live%20demo-→-2a6e69)](https://gyanesh-m.github.io/retro-daily/) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gyanesh-m/retro-daily/pulls)
 
-![retro-daily dashboard at the top of a Claude Code session](docs/screenshots/terminal-top.png)
+![retro-daily dashboard — typing claude and watching the dashboard stream in](docs/screenshots/demo.gif)
 
 Renders at the top of every Claude Code session via a `SessionStart` hook:
 
@@ -15,14 +15,8 @@ Renders at the top of every Claude Code session via a `SessionStart` hook:
 - **Focus areas** — concrete, actionable recommendations for your weakest metrics
 - **Scout findings** — a background worker that searches docs.anthropic.com and GitHub for ideas tied to those weak metrics
 
-## Sample output
-
-> The numbers below are sample data drawn from the author's own session history — your dashboard renders from your local `~/.claude/projects/*.jsonl`.
-
-![Full dashboard scrolled through](docs/screenshots/terminal-dashboard.png)
-
 <details>
-<summary>Plain-text version</summary>
+<summary>Plain-text preview</summary>
 
 ```
 R E T R O  ·  D A I L Y                                   Sun May 17
