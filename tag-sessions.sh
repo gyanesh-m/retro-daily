@@ -7,6 +7,12 @@
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_paths.sh"
 
+# Global opt-out — see scout.sh for the same check.
+if [ "${RETRO_DAILY_NO_BACKGROUND_WORKERS:-0}" = "1" ]; then
+  echo "[tag-sessions] skipped — RETRO_DAILY_NO_BACKGROUND_WORKERS=1"
+  exit 0
+fi
+
 HISTORY_FILE="$RETRO_DAILY_DATA/analysis-history.json"
 RUNNER="$RETRO_DAILY_HOME/tag-sessions-runner.sh"
 LOG="$RETRO_DAILY_DATA/tag-sessions.log"
@@ -48,5 +54,5 @@ fi
 nohup bash "$RUNNER" </dev/null >> "$LOG" 2>&1 &
 disown
 
-echo "[tag-sessions] queued · last run was $DAYS_SINCE days ago"
-echo "[tag-sessions] results will appear in next session (log: $LOG)"
+SHORT_LOG="${LOG/#$HOME/\~}"
+echo "[tag-sessions] queued (last run $DAYS_SINCE days ago), results next session · log: $SHORT_LOG"

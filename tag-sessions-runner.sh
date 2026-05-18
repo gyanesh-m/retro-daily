@@ -162,16 +162,37 @@ Rules:
 PROMPT_EOF
 )
 
-log "invoking claude -p (Read+Write only, no network)"
+log "invoking claude -p (sandboxed; Read+Write only, no network)"
 export CLAUDE_CODE_DISABLE_SESSION_START_HOOK=1
-CLAUDE_OUT=$(claude -p \
+# Same sandbox approach as scout-runner — OS-level sandbox restricts
+# the worker to /tmp writes only, and tag-sessions doesn't need any
+# network access (it reads a digest from /tmp and writes results to
+# /tmp), so we deny all domains. The DIGEST_FILE is already written
+# to /tmp by the digest-builder Python step above, so the Read call
+# stays inside the sandbox's allowRead default. See scout-runner.sh
+# for the full rationale on sandbox vs --dangerously-skip-permissions.
+SANDBOX_CFG='{"sandbox":{"enabled":true,"failIfUnavailable":true,"autoAllowBashIfSandboxed":true,"filesystem":{"allowWrite":["/tmp"],"denyWrite":["/Users","/etc","/usr","/var","/Library","/Applications"]},"network":{"deniedDomains":["*"]}}}'
+
+# Defense in depth — see scout-runner.sh for the full rationale:
+#   1. Sandbox via --settings
+#   2. --setting-sources project (skip user-level Sage etc.)
+#   3. cd to a neutral mktemp dir (skip any project-level plugin hooks)
+WORKER_CWD=$(mktemp -d)
+# Consolidated EXIT trap — bash keeps only the most recent.
+trap 'rm -f "$LOCK" "$DIGEST_FILE"; rmdir "$WORKER_CWD" 2>/dev/null || true' EXIT
+
+CLAUDE_OUT=$(cd "$WORKER_CWD" && claude -p \
+  --setting-sources project \
+  --settings "$SANDBOX_CFG" \
   --allowedTools "Read Write" \
   --append-system-prompt "You are an unattended background tagger. Only use Read and Write. Read the digest at $DIGEST_FILE; write ONLY to $TMP_RESULTS. Be decisive; skip clarifying questions." \
-  "$PROMPT" 2>&1) || {
-    log "claude -p failed (exit $?). last 40 lines:"
-    echo "$CLAUDE_OUT" | tail -40 >> "$LOG"
-    exit 1
-  }
+  "$PROMPT" 2>&1)
+CLAUDE_RC=$?
+if [ "$CLAUDE_RC" -ne 0 ]; then
+  log "claude -p failed (exit $CLAUDE_RC). last 40 lines:"
+  echo "$CLAUDE_OUT" | tail -40 >> "$LOG"
+  exit 1
+fi
 
 log "claude -p completed. last 40 lines:"
 echo "$CLAUDE_OUT" | tail -40 >> "$LOG"

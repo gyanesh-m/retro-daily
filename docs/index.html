@@ -221,20 +221,22 @@
       </figure>
     </section>
 
-    <section class="page-section reveal" data-reveal>
+    <section id="install" class="page-section reveal" data-reveal>
       <h2 class="page-h2">Install</h2>
-      <p class="dim">Inside Claude Code:</p>
-      <pre class="codeblock">
+      <div class="install-body" id="install-body">
+        <p class="dim">Inside Claude Code:</p>
+        <pre class="codeblock">
 <span class="dim">$</span> /plugin marketplace add gyanesh-m/retro-daily
 <span class="dim">$</span> /plugin install retro-daily@retro-daily
 <span class="dim">$</span> /reload-plugins</pre>
-      <p class="dim">Or standalone:</p>
-      <pre class="codeblock">
+        <p class="dim">Or standalone:</p>
+        <pre class="codeblock">
 <span class="dim">$</span> git clone https://github.com/gyanesh-m/retro-daily.git
 <span class="dim">$</span> cd retro-daily && ./install.sh</pre>
-      <div class="cta">
-        <a class="btn" href="https://github.com/gyanesh-m/retro-daily" target="_blank" rel="noopener">view on github</a>
-        <a class="btn ghost" href="https://github.com/gyanesh-m/retro-daily/issues/new" target="_blank" rel="noopener">report issue</a>
+        <div class="cta">
+          <a class="btn" href="https://github.com/gyanesh-m/retro-daily" target="_blank" rel="noopener">view on github</a>
+          <a class="btn ghost" href="https://github.com/gyanesh-m/retro-daily/issues/new" target="_blank" rel="noopener">report issue</a>
+        </div>
       </div>
     </section>
 
@@ -244,7 +246,7 @@
         <a href="https://github.com/gyanesh-m/retro-daily/blob/main/README.md" target="_blank" rel="noopener">readme</a> ·
         <a href="https://github.com/gyanesh-m/retro-daily/blob/main/tests/eval.json" target="_blank" rel="noopener">eval set</a>
       </p>
-      <p class="ascii small dim">[ press any key to continue ]</p>
+      <p class="ascii small dim press-any-key" id="press-any-key" tabindex="0" role="button" aria-label="Highlight install instructions">[ press any key to continue ]</p>
     </footer>
   </main>
 

@@ -69,13 +69,19 @@ body {
     rgba(0, 0, 0, 0.55) 100%);
 }
 .flicker {
-  background: rgba(255, 255, 255, 0.012);
-  animation: flicker 0.18s steps(1) infinite alternate;
+  background: rgba(255, 255, 255, 0.01);
+  /* 13.5s per direction (5x the previous 2.7s) — slows the eased
+     swoop itself, not just the cycle frequency. With `alternate`,
+     a full dim→bright→dim cycle is 27s.                            */
+  animation: flicker 13.5s ease-in-out infinite alternate;
 }
+/* Slow CRT breathe. Original 0.18s steps(1) (jarring strobe) →
+   2.7s ease-in-out still felt quick on the swoop → 13.5s reads as
+   gradual atmosphere rather than animation. Same 0.4↔0.6 opacity
+   delta.                                                          */
 @keyframes flicker {
   0%   { opacity: 0.4; }
-  50%  { opacity: 0.7; }
-  100% { opacity: 0.5; }
+  100% { opacity: 0.6; }
 }
 
 /* ============================================================
@@ -1025,6 +1031,81 @@ body {
   font-size: 13px;
   white-space: pre-wrap;
   overflow-x: auto;
+}
+
+/* Interactive "press any key" prompt */
+.press-any-key {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.18s ease, text-shadow 0.18s ease;
+}
+.press-any-key:hover,
+.press-any-key:focus {
+  color: var(--cyan-bright);
+  text-shadow: var(--glow);
+  outline: none;
+}
+/* Easter-egg target: glows the whole install body — codeblocks,
+   captions, and the CTA buttons row. See setupEasterEgg() in
+   docs/app.js for the trigger logic. The box-shadow is layered
+   (tight + medium + wide blur) so the glow fades into the page
+   background instead of reading as a hard cyan rectangle.        */
+.install-body {
+  padding: 18px 22px;
+  border-radius: 14px;
+}
+.install-body.flash {
+  animation: install-body-flash 1.8s ease-out;
+}
+@keyframes install-body-flash {
+  0% {
+    box-shadow:
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0);
+  }
+  20% {
+    box-shadow:
+      0 0 14px 0    rgba(56, 212, 255, 0.55),
+      0 0 42px 6px  rgba(56, 212, 255, 0.28),
+      0 0 96px 18px rgba(56, 212, 255, 0.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0),
+      0 0 0    0  rgba(56, 212, 255, 0);
+  }
+}
+@media (max-width: 720px) {
+  /* Tighter padding + smaller blurs so the halo stays proportional
+     to the narrower viewport. The page already pads at 20px on each
+     side; another 22px inside would leave too little room for the
+     codeblocks. */
+  .install-body {
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+  @keyframes install-body-flash {
+    0% {
+      box-shadow:
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0);
+    }
+    20% {
+      box-shadow:
+        0 0 10px 0    rgba(56, 212, 255, 0.55),
+        0 0 28px 4px  rgba(56, 212, 255, 0.26),
+        0 0 64px 12px rgba(56, 212, 255, 0.12);
+    }
+    100% {
+      box-shadow:
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0),
+        0 0 0   0  rgba(56, 212, 255, 0);
+    }
+  }
 }
 
 .cta {
