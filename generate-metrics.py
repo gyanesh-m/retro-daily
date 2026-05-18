@@ -726,15 +726,15 @@ def _trend_arrow(delta, direction):
 
 
 def _gauge(value, warn, good, direction, width=20, severity="WARN"):
-    """Horizontal gauge. Extends the bad side of the range so bad values render visibly."""
+    """Horizontal gauge. Scale is [0, good] for higher_better and [0, hi] for lower_better."""
     if direction == "higher_better":
-        lo = max(0, warn - (good - warn))
+        lo = 0
         hi = good
         pct = (value - lo) / (hi - lo) if hi != lo else 0
     else:
-        lo = good
+        lo = 0
         hi = warn + (warn - good)
-        pct = 1.0 - (value - lo) / (hi - lo) if hi != lo else 0
+        pct = 1.0 - value / hi if hi != 0 else 0
     pct = max(0.0, min(1.0, pct))
     filled = int(round(pct * width))
     color = _severity_color(severity)
