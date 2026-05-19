@@ -77,9 +77,11 @@ Test against a local clone before publishing:
 claude --plugin-dir ./retro-daily
 ```
 
-## Paths
+## Configuration
 
-The scripts resolve their layout from two env vars. The plugin's `hooks.json` sets both at session start.
+The scripts read the following env vars at session start. The plugin's `hooks.json` sets path-related ones automatically.
+
+### Paths and labels
 
 | Env var | Default |
 |---|---|
@@ -88,6 +90,17 @@ The scripts resolve their layout from two env vars. The plugin's `hooks.json` se
 | `RETRO_DAILY_PLAN_LABEL` | unset → generic footer |
 
 Set `RETRO_DAILY_PLAN_LABEL="Claude Max $100/mo"` (or `"Claude Pro $20/mo"`, `"API"`, etc.) if you want the cost footer to name your plan. Claude Code does not expose the active subscription tier programmatically, so this can't be auto-detected.
+
+### Background scout (network-facing)
+
+The scout spawns a detached, sandboxed `claude -p` worker that uses `WebSearch` (network access to `docs.anthropic.com` and `github.com`) to research your weakest metrics. Two knobs control it:
+
+| Env var | Default | Effect |
+|---|---|---|
+| `RETRO_DAILY_NO_BACKGROUND_WORKERS` | `0` | Set to `1` to fully opt out of the scout + tag-sessions background workers. The dashboard still renders; just no network-facing research. |
+| `SCOUT_STALE_DAYS` | `7` | Minimum days between scout runs when weak metrics haven't changed. Raise to throttle further. |
+
+Put either in your shell rc, or in your project's `.envrc` if you use direnv. The scout is also automatically skipped if a previous worker is still running, or if its weak-metric set matches the last successful run.
 
 ## Requirements
 
