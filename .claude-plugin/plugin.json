@@ -1,6 +1,6 @@
 {
   "name": "retro-daily",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Retro daily analytics dashboard for Claude Code sessions, rendered via SessionStart hook.",
   "homepage": "https://github.com/gyanesh-m/retro-daily",
   "license": "MIT"
