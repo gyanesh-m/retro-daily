@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "env RETRO_DAILY_HOME=\"${CLAUDE_PLUGIN_ROOT}\" RETRO_DAILY_DATA=\"${CLAUDE_PLUGIN_DATA}\" bash \"${CLAUDE_PLUGIN_ROOT}/startup.sh\"",
-            "timeout": 40,
+            "timeout": 120,
             "statusMessage": "Loading session analytics..."
           }
         ]

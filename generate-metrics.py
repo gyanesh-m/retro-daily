@@ -1296,6 +1296,18 @@ def print_insights(store, yesterday_str):
     except Exception:
         pass
 
+    # Venv notice: surface once per session until setup-venv.sh has been run.
+    if not VENV_PYTHON.exists():
+        out.append("")
+        out.append(
+            f"  {BRIGHT_YELLOW}●{RESET} {DIM}embedding classification disabled "
+            f"(first_try_rate / prompt labels unavailable){RESET}"
+        )
+        out.append(
+            f"    {DIM}→ run once after plugin install:{RESET} "
+            f"{BOLD}RETRO_DAILY_DATA={DATA_DIR} bash \"{CODE_DIR}/setup-venv.sh\"{RESET}"
+        )
+
     out.append("")
     out.append(f"{DIM}{'─' * _RULE_WIDTH}{RESET}")
 
