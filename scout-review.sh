@@ -59,7 +59,9 @@ for q, primary, trending in picks:
         # in terminals/TUIs that don't support them and break the layout).
         url = trending.get("url", "")
         label = url or truncate(trending.get("title", "")[11:], 38)
-        a = truncate(trending.get("actionable", trending.get("summary", "")), 60)
+        # Show the full actionable message — no truncation, so the suggestion
+        # is never cut off with an ellipsis (the line wraps instead).
+        a = trending.get("actionable", trending.get("summary", ""))
         print(f"      {DIM}★ {BRIGHT_WHITE}{label}{RESET}{DIM} · {a}{RESET}")
 
 print()
