@@ -54,9 +54,13 @@ for q, primary, trending in picks:
         a = truncate(primary.get("actionable", primary.get("summary", "")), 120)
         print(f"      {BRIGHT_GREEN}→{RESET} {a}")
     if trending:
-        t = truncate(trending.get("title", "")[11:], 38)  # drop "[trending] " prefix
-        a = truncate(trending.get("actionable", trending.get("summary", "")), 80)
-        print(f"      {DIM}★ {BRIGHT_WHITE}{t}{RESET}{DIM} · {a}{RESET}")
+        # Print the bare GitHub URL as plain text so the terminal auto-detects
+        # and makes it cmd-clickable — no OSC 8 escapes (those render as garbage
+        # in terminals/TUIs that don't support them and break the layout).
+        url = trending.get("url", "")
+        label = url or truncate(trending.get("title", "")[11:], 38)
+        a = truncate(trending.get("actionable", trending.get("summary", "")), 60)
+        print(f"      {DIM}★ {BRIGHT_WHITE}{label}{RESET}{DIM} · {a}{RESET}")
 
 print()
 print(f"{DIM}{'─' * RULE}{RESET}")
